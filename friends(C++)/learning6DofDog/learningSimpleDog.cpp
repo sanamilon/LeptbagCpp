@@ -78,12 +78,15 @@ class dog {
 	public:
 
 	dog (float x, float y, float z) {
-		std::random_device rnd;
+		std::random_device seed_gen;
+		std::default_random_engine engine(seed_gen());
+		std::normal_distribution dist(-1.0, 1.0);
 		for(int i=0; i<20; i++){
 			for(int j=0; j<4; j++){
-				this->dna[i][j] = 10*(rnd()/0xffffffff - 0.5);
+				this->dna[i][j] = 10.0*dist(engine);
 			}
 		}
+		std::cout<<std::endl;
 		spawn(x, y, z);
 	}
 
@@ -195,29 +198,6 @@ class dog {
 		body_legBackRight	= new generic6DofConstraint(chest   , legBackRight , Eigen::Vector3f(-0.5, -0.5,  0.4), Eigen::Vector3f(   0, 0.5,  0.0), Eigen::Quaternionf(1.0, 0, 0, 0));
 		body_tail			= new generic6DofConstraint(chest   , tail         , Eigen::Vector3f(  -1,  0.4,    0), Eigen::Vector3f( 0.5,   0,  0.0), Eigen::Quaternionf(1.0, 0, 0, 0));
 
-		Eigen::Vector3f aLimLow = Eigen::Vector3f(-3.14/2.0, 0, 0);
-		Eigen::Vector3f aLimUp = Eigen::Vector3f(3.14/2.0, 0, 0);
-		body_head->setAngularLimit(aLimLow, aLimUp);
-		head_muzzle->setAngularLimit(aLimLow, aLimUp);
-		earLeft_head->setAngularLimit(aLimLow, aLimUp);
-		earRight_head->setAngularLimit(aLimLow, aLimUp);
-		body_legFrontLeft->setAngularLimit(aLimLow, aLimUp);
-		body_legFrontRight->setAngularLimit(aLimLow, aLimUp);
-		body_legBackLeft->setAngularLimit(aLimLow, aLimUp);
-		body_legBackRight->setAngularLimit(aLimLow, aLimUp);
-		body_tail->setAngularLimit(aLimLow, aLimUp);
-
-		Eigen::Vector3f lLimLow = Eigen::Vector3f(0, 0, 0);
-		Eigen::Vector3f lLimUp = Eigen::Vector3f(0, 0, 0);
-		body_head->setLinearLimit(lLimLow, lLimUp);
-		head_muzzle->setLinearLimit(lLimLow, lLimUp);
-		earLeft_head->setLinearLimit(lLimLow, lLimUp);
-		earRight_head->setLinearLimit(lLimLow, lLimUp);
-		body_legFrontLeft->setLinearLimit(lLimLow, lLimUp);
-		body_legFrontRight->setLinearLimit(lLimLow, lLimUp);
-		body_legBackLeft->setLinearLimit(lLimLow, lLimUp);
-		body_legBackRight->setLinearLimit(lLimLow, lLimUp);
-		body_tail->setLinearLimit(lLimLow, lLimUp);
 
 		for(int index=0; index<3; index++){
 			body_head->setRotationalMotor(index);
@@ -243,16 +223,41 @@ class dog {
 			body_tail->setLinearMotor(index);
 		}
 
+		Eigen::Vector3f aLimLow = Eigen::Vector3f(0, -3.14/3.0, 0);
+		Eigen::Vector3f aLimUp = Eigen::Vector3f(0, 3.14/3.0, 0);
+		body_head->setAngularLimit(aLimLow, aLimUp);
+		head_muzzle->setAngularLimit(aLimLow, aLimUp);
+		earLeft_head->setAngularLimit(aLimLow, aLimUp);
+		earRight_head->setAngularLimit(aLimLow, aLimUp);
+		body_legFrontLeft->setAngularLimit(aLimLow, aLimUp);
+		body_legFrontRight->setAngularLimit(aLimLow, aLimUp);
+		body_legBackLeft->setAngularLimit(aLimLow, aLimUp);
+		body_legBackRight->setAngularLimit(aLimLow, aLimUp);
+		body_tail->setAngularLimit(aLimLow, aLimUp);
+
+		Eigen::Vector3f lLimLow = Eigen::Vector3f(0, 0, 0);
+		Eigen::Vector3f lLimUp = Eigen::Vector3f(0, 0, 0);
+		body_head->setLinearLimit(lLimLow, lLimUp);
+		head_muzzle->setLinearLimit(lLimLow, lLimUp);
+		earLeft_head->setLinearLimit(lLimLow, lLimUp);
+		earRight_head->setLinearLimit(lLimLow, lLimUp);
+		body_legFrontLeft->setLinearLimit(lLimLow, lLimUp);
+		body_legFrontRight->setLinearLimit(lLimLow, lLimUp);
+		body_legBackLeft->setLinearLimit(lLimLow, lLimUp);
+		body_legBackRight->setLinearLimit(lLimLow, lLimUp);
+		body_tail->setLinearLimit(lLimLow, lLimUp);
+
+
 		for(int index=0; index<3; index++){
-			body_head->setMaxRotationalMotorForce(index, 10.0);
-			head_muzzle->setMaxRotationalMotorForce(index, 10.0);
-			earLeft_head->setMaxRotationalMotorForce(index, 10.0);
-			earRight_head->setMaxRotationalMotorForce(index, 10.0);
-			body_legFrontLeft->setMaxRotationalMotorForce(index, 10.0);
-			body_legFrontRight->setMaxRotationalMotorForce(index, 10.0);
-			body_legBackLeft->setMaxRotationalMotorForce(index, 10.0);
-			body_legBackRight->setMaxRotationalMotorForce(index, 10.0);
-			body_tail->setMaxRotationalMotorForce(index, 10.0);
+			body_head->setMaxRotationalMotorForce(index, 30.0);
+			head_muzzle->setMaxRotationalMotorForce(index, 30.0);
+			earLeft_head->setMaxRotationalMotorForce(index, 30.0);
+			earRight_head->setMaxRotationalMotorForce(index, 30.0);
+			body_legFrontLeft->setMaxRotationalMotorForce(index, 30.0);
+			body_legFrontRight->setMaxRotationalMotorForce(index, 30.0);
+			body_legBackLeft->setMaxRotationalMotorForce(index, 30.0);
+			body_legBackRight->setMaxRotationalMotorForce(index, 30.0);
+			body_tail->setMaxRotationalMotorForce(index, 30.0);
 		}
 
 		for(int index=0; index<3; index++){
@@ -278,10 +283,10 @@ class dog {
 		hinge_body_legBackRight->setMotorTarget(dna[sequence][3], 0.3);
 		*/
 
-		body_legFrontLeft->setRotationalTargetVelocity(Eigen::Vector3f(dna[sequence][0], 0, 0));
-		body_legFrontRight->setRotationalTargetVelocity(Eigen::Vector3f(dna[sequence][1], 0, 0));
-		body_legBackLeft->setRotationalTargetVelocity(Eigen::Vector3f(dna[sequence][2], 0, 0));
-		body_legBackRight->setRotationalTargetVelocity(Eigen::Vector3f(dna[sequence][3], 0, 0));
+		body_legFrontLeft->setRotationalTargetVelocity(Eigen::Vector3f(0, dna[sequence][0], 0));
+		body_legFrontRight->setRotationalTargetVelocity(Eigen::Vector3f(0, dna[sequence][1], 0));
+		body_legBackLeft->setRotationalTargetVelocity(Eigen::Vector3f(0, dna[sequence][2], 0));
+		body_legBackRight->setRotationalTargetVelocity(Eigen::Vector3f(0, dna[sequence][3], 0));
 
 	}
 
