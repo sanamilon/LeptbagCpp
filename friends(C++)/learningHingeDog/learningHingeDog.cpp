@@ -68,7 +68,7 @@ class dog {
 
 	phaseOscillator *osci = new phaseOscillator(4, 3);
 
-	double phi_max = M_PI/2;
+	double phi_max = M_PI/2.5;
 	double phi[4];
 
 
@@ -207,10 +207,17 @@ class dog {
 		this->osci->calTheta();
 		this->theta2phi();
 
+		hinge_body_legFrontLeft->setMotorTarget(this->phi[0], 0.1);
+		hinge_body_legFrontRight->setMotorTarget(this->phi[1], 0.1);
+		hinge_body_legBackLeft->setMotorTarget(this->phi[2], 0.1);
+		hinge_body_legBackRight->setMotorTarget(this->phi[3], 0.1);
+
+		/*
 		hinge_body_legFrontLeft->setMotorTarget(dna[sequence][0], 0.5);
 		hinge_body_legFrontRight->setMotorTarget(dna[sequence][1], 0.5);
 		hinge_body_legBackLeft->setMotorTarget(dna[sequence][2], 0.5);
 		hinge_body_legBackRight->setMotorTarget(dna[sequence][3], 0.5);
+		*/
 	}
 
 

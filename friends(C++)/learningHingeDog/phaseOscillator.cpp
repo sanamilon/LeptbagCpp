@@ -39,8 +39,9 @@ class phaseOscillator{
 		int c=0;
 		for(int i=0; i<this->numOfOsci; i++){
 
-			this->theta[i] += this->coeff[c++];
+			this->theta[i] += 10.0*this->coeff[c++];
 
+			/*
 			for(int j=0; j<this->numOfOsci; j++){
 				if(i!=j){
 					for(int k=0; k<this->degreeOfFourier; k++){
@@ -49,6 +50,7 @@ class phaseOscillator{
 					}
 				}
 			}
+			*/
 
 			this->theta[i] += 12.0*M_PI;
 			this->theta[i] = std::fmod(theta[i], 2.0*M_PI);
