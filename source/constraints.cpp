@@ -19,6 +19,10 @@ void hingeConstraint::enableMotor(bool flag){
 	hinge->enableMotor(flag);
 }
 
+double hingeConstraint::getHingeAngle(){
+	return hinge->getHingeAngle();
+}
+
 void hingeConstraint::setLimit(float lower, float upper){
 	hinge->setLimit(lower, upper);
 }

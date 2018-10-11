@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include "phaseOscillator.cpp"
 #include "../../source/japarilib.hpp"
 
 template <typename... ARGS>
@@ -62,9 +63,10 @@ class dog {
 	hingeConstraint* hinge_body_legBackRight;
 	hingeConstraint* hinge_body_tail;
 
+	phaseOscillator *osci = new phaseOscillator(4, 3);
+
 	double phi_max = M_PI/2;
 	double phi[4];
-	double theta[4];
 
 
 	public:
@@ -74,17 +76,10 @@ class dog {
 	}
 
 
-
 	void spawn(float x, float y, float z){
 
-		std::random_device seed_gen;
-		std::default_random_engine engine(seed_gen());
-		std::uniform_real_distribution<double> dist(-this->phi_max, this->phi_max);
-		for(int p: phi){
-			p = dist(engine);
-		}
-		for(int t: theta){
-			t = dist(engine);
+		for(double p: phi){
+			p = 0.0;
 		}
 
 		//犬の体の構造を定義している
@@ -182,10 +177,31 @@ class dog {
 	}
 
 	void move(int sequence){
-		hinge_body_legFrontLeft->setMotorTarget(dna[sequence][0], 0.3);
-		hinge_body_legFrontRight->setMotorTarget(dna[sequence][1], 0.3);
-		hinge_body_legBackLeft->setMotorTarget(dna[sequence][2], 0.3);
-		hinge_body_legBackRight->setMotorTarget(dna[sequence][3], 0.3);
+
+		phi[0] = hinge_body_legFrontLeft->getHingeAngle();
+		phi[1] = hinge_body_legFrontRight->getHingeAngle();
+		phi[2] = hinge_body_legBackLeft->getHingeAngle();
+		phi[3] = hinge_body_legBackRight->getHingeAngle();
+
+		/*
+		for(double p: phi){
+			std::cout<<p<<", ";
+		}
+		std::cout<<std::endl;
+		*/
+
+		this->osci->calTheta();
+		/*
+		for(int i=0; i<4; i++){
+			std::cout<<this->osci->theta[i]<<", ";
+		}
+		std::cout<<std::endl;
+		*/
+
+		hinge_body_legFrontLeft->setMotorTarget(dna[sequence][0], 0.5);
+		hinge_body_legFrontRight->setMotorTarget(dna[sequence][1], 0.5);
+		hinge_body_legBackLeft->setMotorTarget(dna[sequence][2], 0.5);
+		hinge_body_legBackRight->setMotorTarget(dna[sequence][3], 0.5);
 	}
 
 

@@ -17,6 +17,7 @@ class hingeConstraint {
 	hingeConstraint() = delete;
 	hingeConstraint(elementNode* elemA, elementNode* elemB, Eigen::Vector3f positionA, Eigen::Vector3f positionB, Eigen::Vector3f axisA, Eigen::Vector3f axisB);
 	void enableMotor(bool flag);
+	double getHingeAngle();
 	void setLimit(float lower, float upper);
 	void setMaxMotorImpulse(float power);
 	void setMotorTarget(float angle, float duration);
