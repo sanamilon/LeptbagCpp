@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <cmath>
 #include "phaseOscillator.cpp"
 #include "../../source/japarilib.hpp"
 
@@ -178,6 +179,23 @@ class dog {
 		hinge_body_legBackRight->setMaxMotorImpulse(2);
 	}
 
+	void phi2theta(){
+		for(int l=0; l<4; l++){
+			if(this->osci->theta[l]<=M_PI){
+				this->osci->theta[l] = acos( sin(this->phi[l]) / sin(this->phi_max) );
+			}else{
+				this->osci->theta[l] = -1.0*acos( sin(this->phi[l]) / sin(this->phi_max) ) + 2.0*M_PI;
+			}
+		}
+	}
+
+	void theta2phi(){
+		for(int l=0; l<4; l++){
+			this->phi[l] = asin( sin(this->phi_max) * cos(this->osci->theta[l]) );
+		}
+	}
+
+
 	void move(int sequence){
 
 		phi[0] = hinge_body_legFrontLeft->getHingeAngle();
@@ -185,20 +203,9 @@ class dog {
 		phi[2] = hinge_body_legBackLeft->getHingeAngle();
 		phi[3] = hinge_body_legBackRight->getHingeAngle();
 
-		/*
-		for(double p: phi){
-			std::cout<<p<<", ";
-		}
-		std::cout<<std::endl;
-		*/
-
+		this->phi2theta();
 		this->osci->calTheta();
-		/*
-		for(int i=0; i<4; i++){
-			std::cout<<this->osci->theta[i]<<", ";
-		}
-		std::cout<<std::endl;
-		*/
+		this->theta2phi();
 
 		hinge_body_legFrontLeft->setMotorTarget(dna[sequence][0], 0.5);
 		hinge_body_legFrontRight->setMotorTarget(dna[sequence][1], 0.5);
@@ -256,10 +263,6 @@ void tick() {
 		for (auto elem : doglist){
 			elem->move(sequence);
 		}
-		for(int i=0; i<3; i++){
-			std::cout<<(doglist[0]->osci->theta[i] - doglist[0]->osci->theta[i+1])<<", ";
-		}
-		std::cout<<std::endl;
 	}
 }
 
