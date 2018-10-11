@@ -17,7 +17,7 @@ parameterPack* paramPack(ARGS... args){
 
 
 
-const int numofdog = 5;
+const int numofdog = 50;
 const int dnacol = 20;
 const int dnarow = 4;
 
@@ -294,7 +294,7 @@ using mat = Eigen::Matrix<precision, Eigen::Dynamic, Eigen::Dynamic>;
 
 int esItr = 0;
 int lastitr = 0;
-const int maxiter = 2;
+const int maxiter = 50;
 const int N = 4 + 2*3*4*3; //numOfOsci + 2*degreeOfFourier*numOfOsci*(numOfOsci-1)
 
 std::function<precision(vec)> func = sphere<precision>;
@@ -311,6 +311,8 @@ mat diagC = mat::Zero(maxiter, N);
 
 extern "C"
 void init() {
+
+	std::cout<<"maxiter : "<<maxiter<<std::endl;
 
 	es.generateSample();
 	for (int i = 0; i < numofdog; i++) {
@@ -335,10 +337,18 @@ void tick() {
 		std::cout<<"itr "<<esItr<<" ends."<<std::endl;
 		lastitr = esItr;
 
+		//evaluation
+		for(int n=0; n<numofdog; n++){
+			float reachingDistance = (doglist[n]->getPosition() - doglist[n]->initPosition).norm();
+			es.arf(n) = reachingDistance;
+		}
+
+		//goodbye dogs
 		for(int n=0; n<numofdog; n++){
 			doglist[n]->despawn();
 		}
 		es.generateSample();
+		//hello dogs
 		for (int n = 0; n < numofdog; n++) {
 			doglist[n]->spawn(0, 1.5, -5*n);
 			doglist[n]->osci->coeff = es.sample.row(n);
@@ -356,9 +366,7 @@ void tick() {
 
 	//end one itr
 	if(clockOfTrial==limitOfTrial){
-		//evaluation
-		for(int n=0; n<numofdog; n++){
-		}
+
 		es.updateParam();
 
 		//record
