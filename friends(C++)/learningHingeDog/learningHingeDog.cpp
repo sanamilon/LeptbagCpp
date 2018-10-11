@@ -181,11 +181,26 @@ class dog {
 
 	void phi2theta(){
 		for(int l=0; l<4; l++){
+
+			//物理演算中にphiがphi_maxを超えた場合は+-phi_maxとして処理
+			//thetaは0かpiとして返す
+			if(this->phi[l] >= this->phi_max){
+				this->phi[l] = this->phi_max;
+				this->osci->theta[l] = 0.0;
+				return;
+			}else if(this->phi[l]<= -1.0*this->phi_max){
+				this->phi[l] = -1.0*this->phi_max;
+				this->osci->theta[l] = M_PI;
+				return;
+			}
+
+			//thetaが1, 2象限なのか3, 4象限なのかで場合分け
 			if(this->osci->theta[l]<=M_PI){
 				this->osci->theta[l] = acos( sin(this->phi[l]) / sin(this->phi_max) );
 			}else{
 				this->osci->theta[l] = -1.0*acos( sin(this->phi[l]) / sin(this->phi_max) ) + 2.0*M_PI;
 			}
+
 		}
 	}
 
@@ -266,6 +281,26 @@ void tick() {
 	if(timerDivisor++ == 6){
 		sequence = (sequence+1)%20;
 		timerDivisor = 0;
+
+		/*
+		for(int k=0; k<4; k++){
+			std::cout<<( sin(doglist[0]->phi[k]) / sin(doglist[0]->phi_max) )<<", ";
+		}
+		std::cout<<std::endl;
+		*/
+
+		/*
+		std::cout<<"phi : ";
+		for(int i=0; i<4; i++){
+			std::cout<<doglist[0]->phi[i]<<", ";
+		}
+		std::cout<<"\t";
+		std::cout<<"theta : ";
+		for(int j=0; j<4; j++){
+			std::cout<<doglist[0]->osci->theta[j]<<", ";
+		}
+		std::cout<<std::endl;
+		*/
 
 		for (auto elem : doglist){
 			elem->move(sequence);
