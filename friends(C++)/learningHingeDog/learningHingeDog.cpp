@@ -99,61 +99,61 @@ class dog {
 					param("position", Eigen::Vector3f(    x,     y,     z)),
 					param("scale",    Eigen::Vector3f(  1, 0.5, 0.5)),
 					param("rotation", Eigen::Quaternionf(1, 0, 0, 0)),
-					param("mass", 2.0f)));
+					param("mass", 20.0f)));
 
 		head = getCubeshape()->generate(paramPack(
 					param("position", Eigen::Vector3f(x+1.4,     y,     z)),
 					param("scale", Eigen::Vector3f(0.4, 0.4, 0.4)),
 					param("rotation", Eigen::Quaternionf(1, 0, 0, 0)),
-					param("mass", 0.25f)));
+					param("mass", 2.5f)));
 
 		muzzle = getCubeshape()->generate(paramPack(
 					param("position", Eigen::Vector3f(x+2.1, y-0.2,     z)),
 					param("scale", Eigen::Vector3f(0.3, 0.2, 0.2)),
 					param("rotation", Eigen::Quaternionf(1, 0, 0, 0)),
-					param("mass", 0.1f)));
+					param("mass", 1.0f)));
 
 		earLeft = getCubeshape()->generate(paramPack(
 					param("position", Eigen::Vector3f(x+1.4, y+0.5, z-0.2)),
 					param("scale", Eigen::Vector3f(0.1, 0.1, 0.1)),
 					param("rotation", Eigen::Quaternionf(1, 0, 0, 0)),
-					param("mass", 0.05f)));
+					param("mass", 0.5f)));
 
 		earRight = getCubeshape()->generate(paramPack(
 					param("position", Eigen::Vector3f(x+1.4, y+0.5, z+0.2)),
 					param("scale", Eigen::Vector3f(0.1, 0.1, 0.1)),
 					param("rotation", Eigen::Quaternionf(1, 0, 0, 0)),
-					param("mass", 0.05f)));
+					param("mass", 0.5f)));
 
 		legFrontLeft = getCubeshape()->generate(paramPack(
 					param("position", Eigen::Vector3f(x+0.5,   y-1, z-0.4)),
 					param("scale", Eigen::Vector3f(0.1, 0.5, 0.1)),
 					param("rotation", Eigen::Quaternionf(1, 0, 0, 0)),
-					param("mass", 0.3f)));
+					param("mass", 3.0f)));
 
 		legFrontRight = getCubeshape()->generate(paramPack(
 					param("position", Eigen::Vector3f(x+0.5,   y-1, z+0.4)),
 					param("scale", Eigen::Vector3f(0.1, 0.5, 0.1)),
 					param("rotation", Eigen::Quaternionf(1, 0, 0, 0)),
-					param("mass", 0.3f)));
+					param("mass", 3.0f)));
 
 		legBackLeft = getCubeshape()->generate(paramPack(
 					param("position", Eigen::Vector3f(x-0.5,   y-1, z-0.4)),
 					param("scale", Eigen::Vector3f(0.1, 0.5, 0.1)),
 					param("rotation", Eigen::Quaternionf(1, 0, 0, 0)),
-					param("mass", 0.3f)));
+					param("mass", 3.0f)));
 
 		legBackRight = getCubeshape()->generate(paramPack(
 					param("position", Eigen::Vector3f(x-0.5,   y-1, z+0.4)),
 					param("scale", Eigen::Vector3f(0.1, 0.5, 0.1)),
 					param("rotation", Eigen::Quaternionf(1, 0, 0, 0)),
-					param("mass", 0.3f)));
+					param("mass", 3.0f)));
 
 		tail = getCubeshape()->generate(paramPack(
 					param("position", Eigen::Vector3f(x-1.5, y+0.4,     z)),
 					param("scale", Eigen::Vector3f(0.5, 0.1, 0.1)),
 					param("rotation", Eigen::Quaternionf(1, 0, 0, 0)),
-					param("mass", 0.2f)));
+					param("mass", 2.0f)));
 
 
 		hinge_body_head			= new hingeConstraint(chest   , head         , Eigen::Vector3f(   1,    0,    0), Eigen::Vector3f(-0.4,   0,    0), Eigen::Vector3f(0, 0, 1), Eigen::Vector3f(0, 0, 1));
