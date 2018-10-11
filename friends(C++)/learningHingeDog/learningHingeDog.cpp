@@ -17,6 +17,8 @@ const int dnarow = 4;
 
 class dog {
 
+	public:
+
 	int tag = 0;
 
 	float dna [20][4] = {
@@ -254,6 +256,10 @@ void tick() {
 		for (auto elem : doglist){
 			elem->move(sequence);
 		}
+		for(int i=0; i<3; i++){
+			std::cout<<(doglist[0]->osci->theta[i] - doglist[0]->osci->theta[i+1])<<", ";
+		}
+		std::cout<<std::endl;
 	}
 }
 
