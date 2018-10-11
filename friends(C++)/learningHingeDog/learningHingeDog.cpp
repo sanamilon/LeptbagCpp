@@ -2,6 +2,11 @@
 #include <vector>
 #include <random>
 #include <cmath>
+#include <limits>
+#include "cmaes/cmaes.cpp"
+#include "cmaes/objective_func.cpp"
+#include "cmaes/func_es.cpp"
+#include "cmaes/export.cpp"
 #include "phaseOscillator.cpp"
 #include "../../source/japarilib.hpp"
 
@@ -282,47 +287,111 @@ class dog {
 
 std::vector<dog*> doglist;
 
+//for CMA-ES
+using precision = float;
+using vec = Eigen::Matrix<precision, Eigen::Dynamic, 1>;
+using mat = Eigen::Matrix<precision, Eigen::Dynamic, Eigen::Dynamic>;
+
+int esItr = 0;
+int lastitr = 0;
+const int maxiter = 2;
+const int N = 4 + 2*3*4*3; //numOfOsci + 2*degreeOfFourier*numOfOsci*(numOfOsci-1)
+
+std::function<precision(vec)> func = sphere<precision>;
+cmaes<precision> es(
+		func,
+		vec::Zero(N), 0.3, numofdog
+		);
+
+//initialize val for record
+vec meanf = vec::Zero(maxiter);
+vec sigmaN = vec(maxiter);
+mat D = mat::Zero(maxiter, N);
+mat diagC = mat::Zero(maxiter, N);
+
 extern "C"
 void init() {
 
+	es.generateSample();
 	for (int i = 0; i < numofdog; i++) {
 		doglist.push_back(new dog(0, 1.5, -5*i));
+		doglist[i]->initPosition = doglist[i]->getPosition();
+		doglist[i]->osci->coeff = es.sample.row(i);
 	}
 
 }
 
 int timerDivisor = 0;
+int clockOfTrial = 0;
+const int limitOfTrial = 500;
 int sequence = 0;
+
 
 extern "C"
 void tick() {
+
+	//start an itr
+	if(clockOfTrial==limitOfTrial){
+		std::cout<<"itr "<<esItr<<" ends."<<std::endl;
+		lastitr = esItr;
+
+		for(int n=0; n<numofdog; n++){
+			doglist[n]->despawn();
+		}
+		es.generateSample();
+		for (int n = 0; n < numofdog; n++) {
+			doglist[n]->spawn(0, 1.5, -5*n);
+			doglist[n]->osci->coeff = es.sample.row(n);
+		}
+	}
+
+	//dogs move
 	if(timerDivisor++ == 6){
 		sequence = (sequence+1)%20;
 		timerDivisor = 0;
-
-		/*
-		for(int k=0; k<4; k++){
-			std::cout<<( sin(doglist[0]->phi[k]) / sin(doglist[0]->phi_max) )<<", ";
-		}
-		std::cout<<std::endl;
-		*/
-
-		/*
-		std::cout<<"phi : ";
-		for(int i=0; i<4; i++){
-			std::cout<<doglist[0]->phi[i]<<", ";
-		}
-		std::cout<<"\t";
-		std::cout<<"theta : ";
-		for(int j=0; j<4; j++){
-			std::cout<<doglist[0]->osci->theta[j]<<", ";
-		}
-		std::cout<<std::endl;
-		*/
-
 		for (auto elem : doglist){
 			elem->move(sequence);
 		}
 	}
-}
 
+	//end one itr
+	if(clockOfTrial==limitOfTrial){
+		//evaluation
+		for(int n=0; n<numofdog; n++){
+		}
+		es.updateParam();
+
+		//record
+		meanf(esItr) = es.func(es.mean);
+		sigmaN(esItr) = es.sigma*es.N;
+		D.row(esItr) = es.D.transpose();
+		diagC.row(esItr) = es.C.diagonal().transpose();
+
+		if(isnan(meanf(esItr))){
+			std::cout<<"func(mean) goes nan"<<std::endl;
+			exit(0);
+		}
+		if((esItr!=0)&&(meanf(esItr)==0)){
+			std::cout<<"func(mean) goes 0(at itr="<<lastitr<<")"<<std::endl;
+			exit(0);
+		}
+
+		esItr++;
+		clockOfTrial = 0;
+	}
+
+	if(esItr==maxiter){
+		//std::cout<<meanf<<std::endl;
+		meanf = meanf.block(0, 0, lastitr, 1);
+
+		export_data<precision>("result/es_result_meanf.csv", meanf);
+		export_data<precision>("result/es_result_sigmaN.csv", sigmaN);
+		export_data<precision>("result/es_result_D.csv", D);
+		export_data<precision>("result/es_result_diagC.csv", diagC);
+
+		exit(0);
+	}
+
+	clockOfTrial++;
+
+}

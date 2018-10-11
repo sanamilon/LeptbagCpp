@@ -1,6 +1,7 @@
 #include <cmath>
 #include <random>
 #include <iostream>
+#include <Eigen/Dense>
 
 class phaseOscillator{
 	
@@ -10,9 +11,10 @@ class phaseOscillator{
 	double* theta;
 
 	int degreeOfFourier;
-	double* coeff;
+	Eigen::Matrix<float, Eigen::Dynamic, 1> coeff;
 
 	phaseOscillator(int numOfOsci, int degreeOfFourier){
+
 
 		this->numOfOsci = numOfOsci;
 		this->theta = new double[numOfOsci];
@@ -22,7 +24,7 @@ class phaseOscillator{
 
 		this->degreeOfFourier = degreeOfFourier;
 		int coeffSize = numOfOsci + 2*degreeOfFourier*numOfOsci*(numOfOsci-1);
-		this->coeff = new double[coeffSize];
+		this->coeff = Eigen::Matrix<float, Eigen::Dynamic, 1>(coeffSize);
 
 		std::random_device seed_gen;
 		std::default_random_engine engine(seed_gen());
