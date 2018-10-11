@@ -17,7 +17,7 @@ parameterPack* paramPack(ARGS... args){
 
 
 
-const int numofdog = 50;
+const int numofdog = 8;
 const int dnacol = 20;
 const int dnarow = 4;
 
@@ -105,7 +105,7 @@ class dog {
 					param("position", Eigen::Vector3f(x+1.4,     y,     z)),
 					param("scale", Eigen::Vector3f(0.4, 0.4, 0.4)),
 					param("rotation", Eigen::Quaternionf(1, 0, 0, 0)),
-					param("mass", 0.5f)));
+					param("mass", 0.25f)));
 
 		muzzle = getCubeshape()->generate(paramPack(
 					param("position", Eigen::Vector3f(x+2.1, y-0.2,     z)),
@@ -327,6 +327,7 @@ int timerDivisor = 0;
 int clockOfTrial = 0;
 const int limitOfTrial = 500;
 int sequence = 0;
+float topOfTrial = -1000000000;
 
 
 extern "C"
@@ -339,9 +340,12 @@ void tick() {
 
 		//evaluation
 		for(int n=0; n<numofdog; n++){
-			float reachingDistance = (doglist[n]->getPosition() - doglist[n]->initPosition).norm();
-			es.arf(n) = reachingDistance;
+			float reachingDistance = (doglist[n]->getPosition()[0] - doglist[n]->initPosition[0]);
+			topOfTrial = std::max(topOfTrial, reachingDistance);
+			es.arf(n) = -1.0*reachingDistance; //esは最小値を探す
 		}
+		std::cout<<"top : "<<topOfTrial<<std::endl;
+		topOfTrial = -10000000;
 
 		//goodbye dogs
 		for(int n=0; n<numofdog; n++){
