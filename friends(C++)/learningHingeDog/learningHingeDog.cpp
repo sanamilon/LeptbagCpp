@@ -22,6 +22,8 @@ class dog {
 
 	int tag = 0;
 
+	Eigen::Vector3f initPosition;
+
 	float dna [20][4] = {
 		{ -0.74438, -0.0280514,  -0.237172,  0.612237},
 		{ 0.512584,   -0.32883,  -0.845608, -0.138221},
@@ -68,7 +70,7 @@ class dog {
 
 	phaseOscillator *osci = new phaseOscillator(4, 3);
 
-	double phi_max = M_PI/2.5;
+	double phi_max = M_PI/4;
 	double phi[4];
 
 
@@ -177,7 +179,23 @@ class dog {
 		hinge_body_legBackLeft->setMaxMotorImpulse(2);
 		hinge_body_legBackRight->enableMotor(true);
 		hinge_body_legBackRight->setMaxMotorImpulse(2);
+
+		this->initPosition = Eigen::Vector3f(
+										this->head->getXpos(), 
+										this->head->getYpos(),
+										this->head->getZpos()
+											);
+
 	}
+
+	Eigen::Vector3f getPosition(){
+		return Eigen::Vector3f(
+						this->head->getXpos(), 
+						this->head->getYpos(),
+						this->head->getZpos()
+							);
+	}
+
 
 	void phi2theta(){
 		for(int l=0; l<4; l++){
