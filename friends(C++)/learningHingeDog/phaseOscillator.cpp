@@ -26,7 +26,7 @@ class phaseOscillator{
 
 		std::random_device seed_gen;
 		std::default_random_engine engine(seed_gen());
-		std::uniform_real_distribution<double> dist(-0.1, 0.1);
+		std::uniform_real_distribution<double> dist(-0.3, 0.3);
 
 		for(int c=0; c<coeffSize; c++){
 			this->coeff[c] = dist(engine);
@@ -39,9 +39,8 @@ class phaseOscillator{
 		int c=0;
 		for(int i=0; i<this->numOfOsci; i++){
 
-			this->theta[i] += 10.0*this->coeff[c++];
+			this->theta[i] += this->coeff[c++];
 
-			/*
 			for(int j=0; j<this->numOfOsci; j++){
 				if(i!=j){
 					for(int k=0; k<this->degreeOfFourier; k++){
@@ -50,7 +49,6 @@ class phaseOscillator{
 					}
 				}
 			}
-			*/
 
 			this->theta[i] += 12.0*M_PI;
 			this->theta[i] = std::fmod(theta[i], 2.0*M_PI);
