@@ -17,7 +17,7 @@ parameterPack* paramPack(ARGS... args){
 
 
 
-const int numofdog = 100;
+const int numofdog = 50;
 const int dnacol = 20;
 const int dnarow = 4;
 
@@ -294,13 +294,13 @@ using mat = Eigen::Matrix<precision, Eigen::Dynamic, Eigen::Dynamic>;
 
 int esItr = 0;
 int lastitr = 0;
-const int maxiter = 50;
+const int maxiter = 100;
 const int N = 4 + 2*3*4*3; //numOfOsci + 2*degreeOfFourier*numOfOsci*(numOfOsci-1)
 
 std::function<precision(vec)> func = sphere<precision>;
 cmaes<precision> es(
 		func,
-		0.3*vec::Ones(N), 0.1, numofdog
+		0.3*vec::Ones(N), 1.0, numofdog
 		);
 
 //initialize val for record
@@ -389,17 +389,17 @@ void tick() {
 		}
 
 		esItr++;
-		clockOfTrial = 0;
+		clockOfTrial = -1;
 	}
 
 	if(esItr==maxiter){
 		//std::cout<<meanf<<std::endl;
 		meanf = meanf.block(0, 0, lastitr, 1);
 
-		export_data<precision>("result/es_result_meanf.csv", meanf);
-		export_data<precision>("result/es_result_sigmaN.csv", sigmaN);
-		export_data<precision>("result/es_result_D.csv", D);
-		export_data<precision>("result/es_result_diagC.csv", diagC);
+		export_data<precision>("cmaes/result/es_result_meanf.csv", meanf);
+		export_data<precision>("cmaes/result/es_result_sigmaN.csv", sigmaN);
+		export_data<precision>("cmaes/result/es_result_D.csv", D);
+		export_data<precision>("cmaes/result/es_result_diagC.csv", diagC);
 
 		exit(0);
 	}
