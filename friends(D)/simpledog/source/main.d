@@ -13,7 +13,7 @@ import dlib.math.quaternion;
 dog mydog;
 dog[] doglist;
 
-const int numofdog = 5;
+const int numofdog = 20;
 const int dnacol = 20;
 const int dnarow = 4;
 

@@ -17,7 +17,7 @@ parameterPack* paramPack(ARGS... args){
 
 
 
-const int numofdog = 8;
+const int numofdog = 100;
 const int dnacol = 20;
 const int dnarow = 4;
 
@@ -260,17 +260,6 @@ class dog {
 
 
 	void despawn(){
-		chest->destroy();
-		head->destroy();
-		muzzle->destroy();
-		earLeft->destroy();
-		earRight->destroy();
-		legFrontLeft->destroy();
-		legFrontRight->destroy();
-		legBackLeft->destroy();
-		legBackRight->destroy();
-		tail->destroy();
-
 		hinge_body_head->destroy();
 		hinge_head_muzzle->destroy();
 		hinge_earLeft_head->destroy();
@@ -281,6 +270,17 @@ class dog {
 		hinge_body_legBackRight->destroy();
 		hinge_body_tail->destroy();
 
+
+		chest->destroy();
+		head->destroy();
+		muzzle->destroy();
+		earLeft->destroy();
+		earRight->destroy();
+		legFrontLeft->destroy();
+		legFrontRight->destroy();
+		legBackLeft->destroy();
+		legBackRight->destroy();
+		tail->destroy();
 	}
 };
 
@@ -300,7 +300,7 @@ const int N = 4 + 2*3*4*3; //numOfOsci + 2*degreeOfFourier*numOfOsci*(numOfOsci-
 std::function<precision(vec)> func = sphere<precision>;
 cmaes<precision> es(
 		func,
-		vec::Zero(N), 0.3, numofdog
+		0.3*vec::Ones(N), 0.1, numofdog
 		);
 
 //initialize val for record
@@ -341,8 +341,8 @@ void tick() {
 		//evaluation
 		for(int n=0; n<numofdog; n++){
 			float reachingDistance = (doglist[n]->getPosition()[0] - doglist[n]->initPosition[0]);
-			topOfTrial = std::max(topOfTrial, reachingDistance);
 			es.arf(n) = -1.0*reachingDistance; //esは最小値を探す
+			topOfTrial = std::max(topOfTrial, reachingDistance);
 		}
 		std::cout<<"top : "<<topOfTrial<<std::endl;
 		topOfTrial = -10000000;

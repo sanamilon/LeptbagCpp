@@ -31,7 +31,7 @@
 #include "font.hpp"
 #include "misc.hpp"
 
-#define ENABLE_SHADOW
+//#define ENABLE_SHADOW
 
 constexpr int shadowMapBufferSize = 1024;
 
