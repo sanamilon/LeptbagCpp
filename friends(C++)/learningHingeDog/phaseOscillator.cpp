@@ -28,7 +28,7 @@ class phaseOscillator{
 
 		std::random_device seed_gen;
 		std::default_random_engine engine(seed_gen());
-		std::uniform_real_distribution<double> dist(-0.3, 0.3);
+		std::uniform_real_distribution<double> dist(-0.1, 0.1);
 
 		for(int c=0; c<coeffSize; c++){
 			this->coeff[c] = dist(engine);

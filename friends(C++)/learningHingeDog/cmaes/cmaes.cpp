@@ -76,7 +76,7 @@ class cmaes{
 			this->C = mat::Identity(this->N, this->N);
 
 			this->weights = vec::Zero(nsample);
-			double topN = 10.0;
+			double topN = 4.0;
 			T w = topN / T(nsample);
 			//sum of weights is 1. Top 1/topN goes next with those weights.
 			this->weights.block(0, 0, int(nsample/topN), 1) = vec::Constant(int(nsample/topN), w);

@@ -75,7 +75,7 @@ class dog {
 
 	phaseOscillator *osci = new phaseOscillator(4, 3);
 
-	double phi_max = M_PI/4;
+	double phi_max = M_PI/3;
 	double phi[4];
 
 
@@ -105,25 +105,25 @@ class dog {
 					param("position", Eigen::Vector3f(x+1.4,     y,     z)),
 					param("scale", Eigen::Vector3f(0.4, 0.4, 0.4)),
 					param("rotation", Eigen::Quaternionf(1, 0, 0, 0)),
-					param("mass", 2.5f)));
+					param("mass", 2.0f)));
 
 		muzzle = getCubeshape()->generate(paramPack(
 					param("position", Eigen::Vector3f(x+2.1, y-0.2,     z)),
 					param("scale", Eigen::Vector3f(0.3, 0.2, 0.2)),
 					param("rotation", Eigen::Quaternionf(1, 0, 0, 0)),
-					param("mass", 1.0f)));
+					param("mass", 0.5f)));
 
 		earLeft = getCubeshape()->generate(paramPack(
 					param("position", Eigen::Vector3f(x+1.4, y+0.5, z-0.2)),
 					param("scale", Eigen::Vector3f(0.1, 0.1, 0.1)),
 					param("rotation", Eigen::Quaternionf(1, 0, 0, 0)),
-					param("mass", 0.5f)));
+					param("mass", 0.1f)));
 
 		earRight = getCubeshape()->generate(paramPack(
 					param("position", Eigen::Vector3f(x+1.4, y+0.5, z+0.2)),
 					param("scale", Eigen::Vector3f(0.1, 0.1, 0.1)),
 					param("rotation", Eigen::Quaternionf(1, 0, 0, 0)),
-					param("mass", 0.5f)));
+					param("mass", 0.1f)));
 
 		legFrontLeft = getCubeshape()->generate(paramPack(
 					param("position", Eigen::Vector3f(x+0.5,   y-1, z-0.4)),
@@ -166,7 +166,7 @@ class dog {
 		hinge_body_legBackRight	= new hingeConstraint(chest   , legBackRight , Eigen::Vector3f(-0.5, -0.5,  0.4), Eigen::Vector3f(   0, 0.5,  0.0), Eigen::Vector3f(0, 0, 1), Eigen::Vector3f(0, 0, 1));
 		hinge_body_tail			= new hingeConstraint(chest   , tail         , Eigen::Vector3f(  -1,  0.4,    0), Eigen::Vector3f( 0.5,   0,  0.0), Eigen::Vector3f(0, 0, 1), Eigen::Vector3f(0, 0, 1));
 
-		hinge_body_head->setLimit(-M_PI/6, M_PI/6);
+		hinge_body_head->setLimit(-M_PI/9, M_PI/9);
 		hinge_head_muzzle->setLimit(0, 0);
 		hinge_earLeft_head->setLimit(0, 0);
 		hinge_earRight_head->setLimit(0, 0);
@@ -294,13 +294,13 @@ using mat = Eigen::Matrix<precision, Eigen::Dynamic, Eigen::Dynamic>;
 
 int esItr = 0;
 int lastitr = 0;
-const int maxiter = 100;
+const int maxiter = 500;
 const int N = 4 + 2*3*4*3; //numOfOsci + 2*degreeOfFourier*numOfOsci*(numOfOsci-1)
 
 std::function<precision(vec)> func = sphere<precision>;
 cmaes<precision> es(
 		func,
-		0.3*vec::Ones(N), 1.0, numofdog
+		vec::Zero(N), 1.0, numofdog
 		);
 
 //initialize val for record
@@ -333,32 +333,6 @@ float topOfTrial = -1000000000;
 extern "C"
 void tick() {
 
-	//start an itr
-	if(clockOfTrial==limitOfTrial){
-		std::cout<<"itr "<<esItr<<" ends."<<std::endl;
-		lastitr = esItr;
-
-		//evaluation
-		for(int n=0; n<numofdog; n++){
-			float reachingDistance = (doglist[n]->getPosition()[0] - doglist[n]->initPosition[0]);
-			es.arf(n) = -1.0*reachingDistance; //esは最小値を探す
-			topOfTrial = std::max(topOfTrial, reachingDistance);
-		}
-		std::cout<<"top : "<<topOfTrial<<std::endl;
-		topOfTrial = -10000000;
-
-		//goodbye dogs
-		for(int n=0; n<numofdog; n++){
-			doglist[n]->despawn();
-		}
-		es.generateSample();
-		//hello dogs
-		for (int n = 0; n < numofdog; n++) {
-			doglist[n]->spawn(0, 1.5, -5*n);
-			doglist[n]->osci->coeff = es.sample.row(n);
-		}
-	}
-
 	//dogs move
 	if(timerDivisor++ == 6){
 		sequence = (sequence+1)%20;
@@ -368,10 +342,35 @@ void tick() {
 		}
 	}
 
-	//end one itr
+	clockOfTrial++;
+
+	//end an itr
 	if(clockOfTrial==limitOfTrial){
+		std::cout<<"itr "<<esItr<<" ends."<<std::endl;
+		lastitr = esItr;
+
+		//evaluation
+		for(int n=0; n<numofdog; n++){
+			float reachingDistance = doglist[n]->getPosition()[0] - doglist[n]->initPosition[0];
+			es.arf(n) = -1.0*reachingDistance; //esは最小値を探す
+			topOfTrial = std::max(topOfTrial, reachingDistance);
+		}
+		std::cout<<"top : "<<topOfTrial<<std::endl;
+		topOfTrial = -10000000;
 
 		es.updateParam();
+		es.generateSample();
+
+		//goodbye dogs
+		for(int n=0; n<numofdog; n++){
+			doglist[n]->despawn();
+		}
+		//hello dogs
+		for (int n = 0; n < numofdog; n++) {
+			doglist[n]->spawn(0, 1.5, -5*n);
+			doglist[n]->osci->coeff = es.sample.row(n);
+		}
+
 
 		//record
 		meanf(esItr) = es.func(es.mean);
@@ -389,9 +388,10 @@ void tick() {
 		}
 
 		esItr++;
-		clockOfTrial = -1;
+		clockOfTrial = 0;
 	}
 
+	//end learning
 	if(esItr==maxiter){
 		//std::cout<<meanf<<std::endl;
 		meanf = meanf.block(0, 0, lastitr, 1);
@@ -404,6 +404,6 @@ void tick() {
 		exit(0);
 	}
 
-	clockOfTrial++;
+
 
 }
