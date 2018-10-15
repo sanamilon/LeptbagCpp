@@ -17,7 +17,7 @@ parameterPack* paramPack(ARGS... args){
 
 
 
-const int numofdog = 30;
+const int numofdog = 50;
 const int dnacol = 20;
 const int dnarow = 4;
 
@@ -236,6 +236,7 @@ class dog {
 
 	void move(int sequence){
 
+		/*
 		phi[0] = hinge_body_legFrontLeft->getHingeAngle();
 		phi[1] = hinge_body_legFrontRight->getHingeAngle();
 		phi[2] = hinge_body_legBackLeft->getHingeAngle();
@@ -249,13 +250,12 @@ class dog {
 		hinge_body_legFrontRight->setMotorTarget(this->phi[1], 0.1);
 		hinge_body_legBackLeft->setMotorTarget(this->phi[2], 0.1);
 		hinge_body_legBackRight->setMotorTarget(this->phi[3], 0.1);
-
-		/*
-		hinge_body_legFrontLeft->setMotorTarget(dna[sequence][0], 0.5);
-		hinge_body_legFrontRight->setMotorTarget(dna[sequence][1], 0.5);
-		hinge_body_legBackLeft->setMotorTarget(dna[sequence][2], 0.5);
-		hinge_body_legBackRight->setMotorTarget(dna[sequence][3], 0.5);
 		*/
+
+		hinge_body_legFrontLeft->setMotorTarget(dna[sequence][0], 0.3);
+		hinge_body_legFrontRight->setMotorTarget(dna[sequence][1], 0.3);
+		hinge_body_legBackLeft->setMotorTarget(dna[sequence][2], 0.3);
+		hinge_body_legBackRight->setMotorTarget(dna[sequence][3], 0.3);
 	}
 
 
@@ -295,13 +295,13 @@ using mat = Eigen::Matrix<precision, Eigen::Dynamic, Eigen::Dynamic>;
 
 int esItr = 0;
 int lastitr = 0;
-const int maxiter = 5;
-const int N = 4 + 2*3*4*3; //numOfOsci + 2*degreeOfFourier*numOfOsci*(numOfOsci-1)
+const int maxiter = 5000;
+const int N = 80;
 
 std::function<precision(vec)> func = sphere<precision>;
 cmaes<precision> es(
 		func,
-		vec::Zero(N), 0.5, numofdog
+		vec::Zero(N), 1.0, numofdog
 		);
 
 //initialize val for record
@@ -317,14 +317,24 @@ void init() {
 
 	es.generateSample();
 
-	meanDog = new dog(0, 1.5, -5);
+	meanDog = new dog(0, 1.5, 10.0);
 	meanDog->initPosition = meanDog->getPosition();
-	meanDog->osci->coeff = es.mean;
+	int c=0;
+	for(int i=0; i<20; i++){
+		for(int j=0;j<4;j++){
+			meanDog->dna[i][j] = es.mean(c++);
+		}
+	}
 
-	for (int i = 0; i < numofdog; i++) {
-		doglist.push_back(new dog(0, 1.5, -5*i));
-		doglist[i]->initPosition = doglist[i]->getPosition();
-		doglist[i]->osci->coeff = es.sample.row(i);
+	for (int n = 0; n < numofdog; n++){
+		doglist.push_back(new dog(0, 1.5, -10.0*n));
+		doglist[n]->initPosition = doglist[n]->getPosition();
+		c = 0;
+		for(int i=0; i<20; i++){
+			for(int j=0;j<4;j++){
+				doglist[n]->dna[i][j] = es.sample.row(n)(c++);
+			}
+		}
 	}
 
 }
@@ -363,7 +373,8 @@ void tick() {
 			es.arf(n) = -1.0*reachingDistance; //esは最小値を探す
 			topOfTrial = std::max(topOfTrial, reachingDistance);
 		}
-		std::cout<<"top : "<<topOfTrial<<std::endl;
+		std::cout<<"\ttop : "<<topOfTrial<<std::endl;
+		std::cout<<"\tmeanDog : "<<meanReaching<<std::endl;
 		topOfTrial = -10000000;
 
 		es.updateParam();
@@ -375,11 +386,21 @@ void tick() {
 			doglist[n]->despawn();
 		}
 		//hello dogs
-		meanDog->spawn(0, 1.5, -5.0);
-		meanDog->osci->coeff = es.mean;
+		meanDog->spawn(0, 1.5, 10.0);
+		int c=0;
+		for(int i=0; i<20; i++){
+			for(int j=0;j<4;j++){
+				meanDog->dna[i][j] = es.mean(c++);
+			}
+		}
 		for (int n = 0; n < numofdog; n++) {
-			doglist[n]->spawn(0, 1.5, -5*n);
-			doglist[n]->osci->coeff = es.sample.row(n);
+			doglist[n]->spawn(0, 1.5, -10.0*n);
+			c = 0;
+			for(int i=0; i<20; i++){
+				for(int j=0;j<4;j++){
+					doglist[n]->dna[i][j] = es.sample.row(n)(c++);
+				}
+			}
 		}
 
 

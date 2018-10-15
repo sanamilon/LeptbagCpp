@@ -43,7 +43,7 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> gram_schmidt(Eigen::Matrix<T, E
 static Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> R;
 static bool fixed_rotation = false;
 static bool R_initialized = false;
-static const float EllipsoidCondition = 10;
+static const float EllipsoidCondition = 3;
 //rotation of ellipsoid
 //optimal(0, ..., 0)
 template<typename type>

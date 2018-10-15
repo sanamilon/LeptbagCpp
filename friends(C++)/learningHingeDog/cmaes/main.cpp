@@ -13,11 +13,11 @@ int main(){
 	using vec = Eigen::Matrix<precision, Eigen::Dynamic, 1>;
 	using mat = Eigen::Matrix<precision, Eigen::Dynamic, Eigen::Dynamic>;
 
-	int maxiter = 5000;
+	int maxiter = 10000;
 	int N = 50;
 
 
-	std::function<precision(vec)> func = sphere<precision>;
+	std::function<precision(vec)> func = rotated_ellipsoid<precision>;
 	cmaes<precision> es(
 			func,
 			vec::Zero(N), 1, 10
