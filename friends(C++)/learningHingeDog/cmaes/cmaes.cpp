@@ -128,6 +128,7 @@ class cmaes{
 		//update ps, C, sigma, mean
 		void updateParam(){
 
+			//昇順
 			std::vector<int> idx = argsort<T>(this->arf);
 
 			mat sorted_arz = sort_matrix_row_with_indices<T>(this->arz, idx);

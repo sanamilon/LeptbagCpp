@@ -17,7 +17,7 @@ parameterPack* paramPack(ARGS... args){
 
 
 
-const int numofdog = 50;
+const int numofdog = 30;
 const int dnacol = 20;
 const int dnarow = 4;
 
@@ -286,6 +286,7 @@ class dog {
 
 
 std::vector<dog*> doglist;
+dog* meanDog;
 
 //for CMA-ES
 using precision = float;
@@ -294,13 +295,13 @@ using mat = Eigen::Matrix<precision, Eigen::Dynamic, Eigen::Dynamic>;
 
 int esItr = 0;
 int lastitr = 0;
-const int maxiter = 500;
+const int maxiter = 5;
 const int N = 4 + 2*3*4*3; //numOfOsci + 2*degreeOfFourier*numOfOsci*(numOfOsci-1)
 
 std::function<precision(vec)> func = sphere<precision>;
 cmaes<precision> es(
 		func,
-		vec::Zero(N), 1.0, numofdog
+		vec::Zero(N), 0.5, numofdog
 		);
 
 //initialize val for record
@@ -315,6 +316,11 @@ void init() {
 	std::cout<<"maxiter : "<<maxiter<<std::endl;
 
 	es.generateSample();
+
+	meanDog = new dog(0, 1.5, -5);
+	meanDog->initPosition = meanDog->getPosition();
+	meanDog->osci->coeff = es.mean;
+
 	for (int i = 0; i < numofdog; i++) {
 		doglist.push_back(new dog(0, 1.5, -5*i));
 		doglist[i]->initPosition = doglist[i]->getPosition();
@@ -337,6 +343,7 @@ void tick() {
 	if(timerDivisor++ == 6){
 		sequence = (sequence+1)%20;
 		timerDivisor = 0;
+		meanDog->move(sequence);
 		for (auto elem : doglist){
 			elem->move(sequence);
 		}
@@ -350,6 +357,7 @@ void tick() {
 		lastitr = esItr;
 
 		//evaluation
+		float meanReaching = meanDog->getPosition()[0] - meanDog->initPosition[0];
 		for(int n=0; n<numofdog; n++){
 			float reachingDistance = doglist[n]->getPosition()[0] - doglist[n]->initPosition[0];
 			es.arf(n) = -1.0*reachingDistance; //esは最小値を探す
@@ -362,10 +370,13 @@ void tick() {
 		es.generateSample();
 
 		//goodbye dogs
+		meanDog->despawn();
 		for(int n=0; n<numofdog; n++){
 			doglist[n]->despawn();
 		}
 		//hello dogs
+		meanDog->spawn(0, 1.5, -5.0);
+		meanDog->osci->coeff = es.mean;
 		for (int n = 0; n < numofdog; n++) {
 			doglist[n]->spawn(0, 1.5, -5*n);
 			doglist[n]->osci->coeff = es.sample.row(n);
@@ -373,7 +384,7 @@ void tick() {
 
 
 		//record
-		meanf(esItr) = es.func(es.mean);
+		meanf(esItr) = -1.0*meanReaching;
 		sigmaN(esItr) = es.sigma*es.N;
 		D.row(esItr) = es.D.transpose();
 		diagC.row(esItr) = es.C.diagonal().transpose();
@@ -396,10 +407,10 @@ void tick() {
 		//std::cout<<meanf<<std::endl;
 		meanf = meanf.block(0, 0, lastitr, 1);
 
-		export_data<precision>("cmaes/result/es_result_meanf.csv", meanf);
-		export_data<precision>("cmaes/result/es_result_sigmaN.csv", sigmaN);
-		export_data<precision>("cmaes/result/es_result_D.csv", D);
-		export_data<precision>("cmaes/result/es_result_diagC.csv", diagC);
+		export_data<precision>("plugins/result/es_result_meanf.csv", meanf);
+		export_data<precision>("plugins/result/es_result_sigmaN.csv", sigmaN);
+		export_data<precision>("plugins/result/es_result_D.csv", D);
+		export_data<precision>("plugins/result/es_result_diagC.csv", diagC);
 
 		exit(0);
 	}
