@@ -1,7 +1,7 @@
 PROG := simpleDog
 SRCS := main.cpp
 INSTALL_DEST := ../../source/plugins/
-CC := g++-8
+CC := g++-7
 LIBS :=
 CCFLAGS := -std=c++17 -DGLM_ENABLE_EXPERIMENTAL -shared -fPIC -undefined dynamic_lookup
 INCLUDEPATH := -I/usr/local/include/freetype2

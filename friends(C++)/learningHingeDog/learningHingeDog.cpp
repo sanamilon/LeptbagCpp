@@ -295,7 +295,7 @@ using mat = Eigen::Matrix<precision, Eigen::Dynamic, Eigen::Dynamic>;
 
 int esItr = 0;
 int lastitr = 0;
-const int maxiter = 5000;
+const int maxiter = 500;
 const int N = 80;
 
 std::function<precision(vec)> func = sphere<precision>;
@@ -366,6 +366,12 @@ void tick() {
 		std::cout<<"itr "<<esItr<<" ends."<<std::endl;
 		lastitr = esItr;
 
+		//record
+		meanf(esItr) = -1.0*meanReaching;
+		sigmaN(esItr) = es.sigma*es.N;
+		D.row(esItr) = es.D.transpose();
+		diagC.row(esItr) = es.C.diagonal().transpose();
+
 		//evaluation
 		float meanReaching = meanDog->getPosition()[0] - meanDog->initPosition[0];
 		for(int n=0; n<numofdog; n++){
@@ -401,22 +407,6 @@ void tick() {
 					doglist[n]->dna[i][j] = es.sample.row(n)(c++);
 				}
 			}
-		}
-
-
-		//record
-		meanf(esItr) = -1.0*meanReaching;
-		sigmaN(esItr) = es.sigma*es.N;
-		D.row(esItr) = es.D.transpose();
-		diagC.row(esItr) = es.C.diagonal().transpose();
-
-		if(isnan(meanf(esItr))){
-			std::cout<<"func(mean) goes nan"<<std::endl;
-			exit(0);
-		}
-		if((esItr!=0)&&(meanf(esItr)==0)){
-			std::cout<<"func(mean) goes 0(at itr="<<lastitr<<")"<<std::endl;
-			exit(0);
 		}
 
 		esItr++;

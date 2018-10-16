@@ -9,7 +9,7 @@ parameterPack* paramPack(ARGS... args){
 
 
 
-const int numofdog = 20;
+const int numofdog = 50;
 const int dnacol = 20;
 const int dnarow = 4;
 
@@ -203,7 +203,7 @@ extern "C"
 void init() {
 
 	for (int i = 0; i < numofdog; i++) {
-		doglist.push_back(new dog(0, 1.5, -5*i));
+		doglist.push_back(new dog(0, 1.5, -15.0*i));
 	}
 
 }
