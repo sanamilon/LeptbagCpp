@@ -551,13 +551,17 @@ int main() {
 	while (glfwWindowShouldClose(::window) == GL_FALSE) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		//描画はしない
+		while(true){
 
-		for (auto elem: pluginTickVector) {
-			(elem)();
+			for (auto elem: pluginTickVector) {
+				(elem)();
+			}
+
+			//物理演算1ステップ進める
+			dynamicsWorld->stepSimulation(1 / 60.f, 10);
+
 		}
-
-		//物理演算1ステップ進める
-		dynamicsWorld->stepSimulation(1 / 60.f, 10);
 
 
 		// :: OpenGL描画 ::

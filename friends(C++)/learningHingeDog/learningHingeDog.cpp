@@ -3,6 +3,7 @@
 #include <random>
 #include <cmath>
 #include <limits>
+#include <chrono>
 #include "cmaes/cmaes.cpp"
 #include "cmaes/objective_func.cpp"
 #include "cmaes/func_es.cpp"
@@ -17,7 +18,7 @@ parameterPack* paramPack(ARGS... args){
 
 
 
-const int numofdog = 50;
+const int numofdog = 10;
 const int dnacol = 20;
 const int dnarow = 4;
 
@@ -75,7 +76,7 @@ class dog {
 
 	phaseOscillator *osci = new phaseOscillator(4, 3);
 
-	double phi_max = M_PI/3;
+	static constexpr double phi_max = M_PI/3;
 	double phi[4];
 
 
@@ -292,10 +293,7 @@ dog* meanDog;
 using precision = float;
 using vec = Eigen::Matrix<precision, Eigen::Dynamic, 1>;
 using mat = Eigen::Matrix<precision, Eigen::Dynamic, Eigen::Dynamic>;
-
-int esItr = 0;
-int lastitr = 0;
-const int maxiter = 500;
+const int maxiter = 10;
 const int N = 80;
 
 std::function<precision(vec)> func = sphere<precision>;
@@ -305,13 +303,16 @@ cmaes<precision> es(
 		);
 
 //initialize val for record
+vec topf = vec::Zero(maxiter);
 vec meanf = vec::Zero(maxiter);
 vec sigmaN = vec(maxiter);
 mat D = mat::Zero(maxiter, N);
 mat diagC = mat::Zero(maxiter, N);
 
+std::chrono::system_clock::time_point start, end;
 extern "C"
 void init() {
+	start = std::chrono::system_clock::now();
 
 	std::cout<<"maxiter : "<<maxiter<<std::endl;
 
@@ -339,11 +340,14 @@ void init() {
 
 }
 
+int esItr = 0;
+int lastitr = 0;
 int timerDivisor = 0;
 int clockOfTrial = 0;
 const int limitOfTrial = 500;
 int sequence = 0;
 float topOfTrial = -1000000000;
+int topDogID = -1; //最後のiterで最もよい評価値だった個体のパラメータ
 
 
 extern "C"
@@ -363,14 +367,7 @@ void tick() {
 
 	//end an itr
 	if(clockOfTrial==limitOfTrial){
-		std::cout<<"itr "<<esItr<<" ends."<<std::endl;
 		lastitr = esItr;
-
-		//record
-		meanf(esItr) = -1.0*meanReaching;
-		sigmaN(esItr) = es.sigma*es.N;
-		D.row(esItr) = es.D.transpose();
-		diagC.row(esItr) = es.C.diagonal().transpose();
 
 		//evaluation
 		float meanReaching = meanDog->getPosition()[0] - meanDog->initPosition[0];
@@ -379,8 +376,20 @@ void tick() {
 			es.arf(n) = -1.0*reachingDistance; //esは最小値を探す
 			topOfTrial = std::max(topOfTrial, reachingDistance);
 		}
-		std::cout<<"\ttop : "<<topOfTrial<<std::endl;
-		std::cout<<"\tmeanDog : "<<meanReaching<<std::endl;
+
+		//record
+		topf(esItr) = -1.0*topOfTrial;
+		meanf(esItr) = -1.0*meanReaching;
+		sigmaN(esItr) = es.sigma*es.N;
+		D.row(esItr) = es.D.transpose();
+		diagC.row(esItr) = es.C.diagonal().transpose();
+
+		if(esItr%1==0){
+			std::cout<<"itr "<<esItr<<" ends."<<std::endl;
+			std::cout<<"\ttop : "<<topOfTrial<<std::endl;
+			std::cout<<"\tmeanDog : "<<meanReaching<<std::endl;
+		}
+
 		topOfTrial = -10000000;
 
 		es.updateParam();
@@ -416,12 +425,16 @@ void tick() {
 	//end learning
 	if(esItr==maxiter){
 		//std::cout<<meanf<<std::endl;
-		meanf = meanf.block(0, 0, lastitr, 1);
 
+		export_data<precision>("plugins/result/es_result_topf.csv", topf);
 		export_data<precision>("plugins/result/es_result_meanf.csv", meanf);
 		export_data<precision>("plugins/result/es_result_sigmaN.csv", sigmaN);
 		export_data<precision>("plugins/result/es_result_D.csv", D);
 		export_data<precision>("plugins/result/es_result_diagC.csv", diagC);
+
+		end = std::chrono::system_clock::now();
+		double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+		std::cout<<elapsed<<std::endl;
 
 		exit(0);
 	}
