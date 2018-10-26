@@ -13,7 +13,7 @@ int main(){
 	using vec = Eigen::Matrix<precision, Eigen::Dynamic, 1>;
 	using mat = Eigen::Matrix<precision, Eigen::Dynamic, Eigen::Dynamic>;
 
-	int maxiter = 10000;
+	int maxiter = 5000;
 	int N = 50;
 
 

@@ -18,7 +18,7 @@ parameterPack* paramPack(ARGS... args){
 
 
 
-const int numofdog = 10;
+const int numofdog = 150;
 const int dnacol = 20;
 const int dnarow = 4;
 
@@ -293,7 +293,7 @@ dog* meanDog;
 using precision = float;
 using vec = Eigen::Matrix<precision, Eigen::Dynamic, 1>;
 using mat = Eigen::Matrix<precision, Eigen::Dynamic, Eigen::Dynamic>;
-const int maxiter = 10;
+const int maxiter = 5000;
 const int N = 80;
 
 std::function<precision(vec)> func = sphere<precision>;
@@ -347,7 +347,7 @@ int clockOfTrial = 0;
 const int limitOfTrial = 500;
 int sequence = 0;
 float topOfTrial = -1000000000;
-int topDogID = -1; //最後のiterで最もよい評価値だった個体のパラメータ
+vec topDogCoeff;
 
 
 extern "C"
@@ -374,7 +374,10 @@ void tick() {
 		for(int n=0; n<numofdog; n++){
 			float reachingDistance = doglist[n]->getPosition()[0] - doglist[n]->initPosition[0];
 			es.arf(n) = -1.0*reachingDistance; //esは最小値を探す
-			topOfTrial = std::max(topOfTrial, reachingDistance);
+			if(topOfTrial<reachingDistance){
+				topOfTrial = reachingDistance;
+				topDogCoeff = es.sample.row(n);
+			}
 		}
 
 		//record
@@ -426,6 +429,7 @@ void tick() {
 	if(esItr==maxiter){
 		//std::cout<<meanf<<std::endl;
 
+		export_data<precision>("plugins/result/es_result_topParam.csv", topDogCoeff);
 		export_data<precision>("plugins/result/es_result_topf.csv", topf);
 		export_data<precision>("plugins/result/es_result_meanf.csv", meanf);
 		export_data<precision>("plugins/result/es_result_sigmaN.csv", sigmaN);

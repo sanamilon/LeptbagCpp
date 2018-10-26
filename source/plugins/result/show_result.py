@@ -7,7 +7,7 @@ sigmaN = np.loadtxt("es_result_sigmaN.csv", delimiter=",")
 D = np.loadtxt("es_result_D.csv", delimiter=",")
 diagC = np.loadtxt("es_result_diagC.csv", delimiter=",")
 
-plt.figure(figsize=(15, 10))
+plt.figure(figsize=(9, 6))
 
 
 plt.subplot(231)
