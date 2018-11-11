@@ -4,6 +4,9 @@
 #include <cmath>
 #include <limits>
 #include <chrono>
+
+#include "active_one_one_cmaes/optimizer.hpp"
+
 #include "cmaes/cmaes.cpp"
 #include "cmaes/objective_func.cpp"
 #include "cmaes/func_es.cpp"
@@ -18,7 +21,6 @@ parameterPack* paramPack(ARGS... args){
 
 
 
-const int numofdog = 150;
 const int dnacol = 20;
 const int dnarow = 4;
 
@@ -286,26 +288,25 @@ class dog {
 };
 
 
-std::vector<dog*> doglist;
 dog* meanDog;
 
 //for CMA-ES
-using precision = float;
+using precision = double;
 using vec = Eigen::Matrix<precision, Eigen::Dynamic, 1>;
 using mat = Eigen::Matrix<precision, Eigen::Dynamic, Eigen::Dynamic>;
 const int maxiter = 5000;
 const int N = 80;
 
-std::function<precision(vec)> func = sphere<precision>;
-cmaes<precision> es(
-		func,
-		vec::Zero(N), 1.0, numofdog
+optimizer es(
+		[](Eigen::Matrix<double, Eigen::Dynamic, 1> x){return x.norm();},
+		Eigen::Matrix<double, Eigen::Dynamic, 1>::Zero(N),
+		1.0,
+		true
 		);
 
 //initialize val for record
-vec topf = vec::Zero(maxiter);
 vec meanf = vec::Zero(maxiter);
-vec sigmaN = vec(maxiter);
+vec sigma = vec(maxiter);
 mat D = mat::Zero(maxiter, N);
 mat diagC = mat::Zero(maxiter, N);
 
@@ -323,18 +324,7 @@ void init() {
 	int c=0;
 	for(int i=0; i<20; i++){
 		for(int j=0;j<4;j++){
-			meanDog->dna[i][j] = es.mean(c++);
-		}
-	}
-
-	for (int n = 0; n < numofdog; n++){
-		doglist.push_back(new dog(0, 1.5, -10.0*n));
-		doglist[n]->initPosition = doglist[n]->getPosition();
-		c = 0;
-		for(int i=0; i<20; i++){
-			for(int j=0;j<4;j++){
-				doglist[n]->dna[i][j] = es.sample.row(n)(c++);
-			}
+			meanDog->dna[i][j] = static_cast<float>(es.sample(c++));
 		}
 	}
 
@@ -346,8 +336,6 @@ int timerDivisor = 0;
 int clockOfTrial = 0;
 const int limitOfTrial = 500;
 int sequence = 0;
-float topOfTrial = -1000000000;
-vec topDogCoeff;
 
 
 extern "C"
@@ -358,9 +346,6 @@ void tick() {
 		sequence = (sequence+1)%20;
 		timerDivisor = 0;
 		meanDog->move(sequence);
-		for (auto elem : doglist){
-			elem->move(sequence);
-		}
 	}
 
 	clockOfTrial++;
@@ -371,53 +356,39 @@ void tick() {
 
 		//evaluation
 		float meanReaching = meanDog->getPosition()[0] - meanDog->initPosition[0];
-		for(int n=0; n<numofdog; n++){
-			float reachingDistance = doglist[n]->getPosition()[0] - doglist[n]->initPosition[0];
-			es.arf(n) = -1.0*reachingDistance; //esは最小値を探す
-			if(topOfTrial<reachingDistance){
-				topOfTrial = reachingDistance;
-				topDogCoeff = es.sample.row(n);
-			}
+		es.anceEval.push_front(static_cast<double>(meanReaching));
+		if(es.anceEval.size() > es.ancestorSize+1){
+			es.anceEval.pop_back();
 		}
 
+
 		//record
-		topf(esItr) = -1.0*topOfTrial;
 		meanf(esItr) = -1.0*meanReaching;
-		sigmaN(esItr) = es.sigma*es.N;
+		sigma(esItr) = static_cast<float>(es.sigma);
+
+		es.C = es.A*es.A.transpose();
+		Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> eig(es.C);
+		es.D = eig.eigenvalues();
+
 		D.row(esItr) = es.D.transpose();
 		diagC.row(esItr) = es.C.diagonal().transpose();
 
 		if(esItr%1==0){
 			std::cout<<"itr "<<esItr<<" ends."<<std::endl;
-			std::cout<<"\ttop : "<<topOfTrial<<std::endl;
 			std::cout<<"\tmeanDog : "<<meanReaching<<std::endl;
 		}
-
-		topOfTrial = -10000000;
 
 		es.updateParam();
 		es.generateSample();
 
 		//goodbye dogs
 		meanDog->despawn();
-		for(int n=0; n<numofdog; n++){
-			doglist[n]->despawn();
-		}
 		//hello dogs
 		meanDog->spawn(0, 1.5, 10.0);
 		int c=0;
 		for(int i=0; i<20; i++){
 			for(int j=0;j<4;j++){
-				meanDog->dna[i][j] = es.mean(c++);
-			}
-		}
-		for (int n = 0; n < numofdog; n++) {
-			doglist[n]->spawn(0, 1.5, -10.0*n);
-			c = 0;
-			for(int i=0; i<20; i++){
-				for(int j=0;j<4;j++){
-					doglist[n]->dna[i][j] = es.sample.row(n)(c++);
-				}
+				meanDog->dna[i][j] = static_cast<float>(es.sample(c++));
 			}
 		}
 
@@ -429,10 +400,8 @@ void tick() {
 	if(esItr==maxiter){
 		//std::cout<<meanf<<std::endl;
 
-		export_data<precision>("plugins/result/es_result_topParam.csv", topDogCoeff);
-		export_data<precision>("plugins/result/es_result_topf.csv", topf);
 		export_data<precision>("plugins/result/es_result_meanf.csv", meanf);
-		export_data<precision>("plugins/result/es_result_sigmaN.csv", sigmaN);
+		export_data<precision>("plugins/result/es_result_sigma.csv", sigma);
 		export_data<precision>("plugins/result/es_result_D.csv", D);
 		export_data<precision>("plugins/result/es_result_diagC.csv", diagC);
 
