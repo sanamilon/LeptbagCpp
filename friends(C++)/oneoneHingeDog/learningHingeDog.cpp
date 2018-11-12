@@ -6,6 +6,7 @@
 #include <chrono>
 
 #include "active_one_one_cmaes/optimizer.hpp"
+#include "active_one_one_cmaes/optimizer.cpp"
 
 #include "cmaes/cmaes.cpp"
 #include "cmaes/objective_func.cpp"
@@ -294,14 +295,16 @@ dog* meanDog;
 using precision = double;
 using vec = Eigen::Matrix<precision, Eigen::Dynamic, 1>;
 using mat = Eigen::Matrix<precision, Eigen::Dynamic, Eigen::Dynamic>;
-const int maxiter = 5000;
+const int maxiter = 10000;
 const int N = 80;
 
+std::function<double(vec)> func = [](Eigen::Matrix<double, Eigen::Dynamic, 1> x){return x.norm();};
+
 optimizer es(
-		[](Eigen::Matrix<double, Eigen::Dynamic, 1> x){return x.norm();},
+		func,
 		Eigen::Matrix<double, Eigen::Dynamic, 1>::Zero(N),
 		1.0,
-		true
+		false
 		);
 
 //initialize val for record
@@ -373,7 +376,7 @@ void tick() {
 		D.row(esItr) = es.D.transpose();
 		diagC.row(esItr) = es.C.diagonal().transpose();
 
-		if(esItr%1==0){
+		if(esItr%100==0){
 			std::cout<<"itr "<<esItr<<" ends."<<std::endl;
 			std::cout<<"\tmeanDog : "<<meanReaching<<std::endl;
 		}
