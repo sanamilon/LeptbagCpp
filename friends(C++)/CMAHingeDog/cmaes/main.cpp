@@ -1,35 +1,36 @@
 #include <vector>
 #include <limits>
+#include "cmaes.hpp"
 #include "cmaes.cpp"
-#include "objective_func.cpp"
-#include "func_es.cpp"
+//#include "objective_func.cpp"
+#include "test_function.cpp"
+#include "func_cmaes.cpp"
 #include "export.cpp"
 
-//static const bool debug = false;
+
+using vec = Eigen::Matrix<double, Eigen::Dynamic, 1>;
+using mat = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>;
 
 int main(){
 
-	using precision = float;
-	using vec = Eigen::Matrix<precision, Eigen::Dynamic, 1>;
-	using mat = Eigen::Matrix<precision, Eigen::Dynamic, Eigen::Dynamic>;
-
-	int maxiter = 5000;
-	int N = 50;
+	int maxiter = 10000;
+	int N = 30;
 
 
-	std::function<precision(vec)> func = rotated_ellipsoid<precision>;
-	cmaes<precision> es(
+	std::function<double(vec)> func = rosenbrock;
+	//std::function<double(vec)> func = rotated_ellipsoid;
+	//std::function<double(vec)> func = sphere;
+	cmaes es(
 			func,
-			vec::Zero(N), 1, 10
+			vec::Zero(N), 1, 20
 			);
 
 	//initialize val for record
 	vec meanf = vec::Zero(maxiter);
-	vec sigmaN = vec(maxiter);
+	vec sigma = vec(maxiter);
 	mat D = mat::Zero(maxiter, N);
 	mat diagC = mat::Zero(maxiter, N);
 
-	//learning
 	int lastitr = 0;
 	for(int itr=0; itr<maxiter; itr++){
 		lastitr = itr;
@@ -38,9 +39,8 @@ int main(){
 		es.evaluate();
 		es.updateParam();
 
-		//record
 		meanf(itr) = es.func(es.mean);
-		sigmaN(itr) = es.sigma*es.N;
+		sigma(itr) = es.sigma;
 		D.row(itr) = es.D.transpose();
 		diagC.row(itr) = es.C.diagonal().transpose();
 
@@ -57,9 +57,9 @@ int main(){
 	//std::cout<<meanf<<std::endl;
 	meanf = meanf.block(0, 0, lastitr, 1);
 
-	export_data<precision>("result/es_result_meanf.csv", meanf);
-	export_data<precision>("result/es_result_sigmaN.csv", sigmaN);
-	export_data<precision>("result/es_result_D.csv", D);
-	export_data<precision>("result/es_result_diagC.csv", diagC);
+	export_data("result/es_result_meanf.csv", meanf);
+	export_data("result/es_result_sigma.csv", sigma);
+	export_data("result/es_result_D.csv", D);
+	export_data("result/es_result_diagC.csv", diagC);
 
 }

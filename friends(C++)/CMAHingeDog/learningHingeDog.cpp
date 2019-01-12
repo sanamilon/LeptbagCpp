@@ -6,7 +6,7 @@
 #include <chrono>
 #include "cmaes/cmaes.cpp"
 #include "cmaes/objective_func.cpp"
-#include "cmaes/func_es.cpp"
+#include "cmaes/func_cmaes.cpp"
 #include "cmaes/export.cpp"
 #include "phaseOscillator.cpp"
 #include "../../source/japarilib.hpp"
@@ -18,7 +18,7 @@ parameterPack* paramPack(ARGS... args){
 
 
 
-const int numofdog = 150;
+const int numofdog = 30;
 const int dnacol = 20;
 const int dnarow = 4;
 
@@ -290,14 +290,14 @@ std::vector<dog*> doglist;
 dog* meanDog;
 
 //for CMA-ES
-using precision = float;
+using precision = double;
 using vec = Eigen::Matrix<precision, Eigen::Dynamic, 1>;
 using mat = Eigen::Matrix<precision, Eigen::Dynamic, Eigen::Dynamic>;
-const int maxiter = 5000;
+const int maxiter = 500;
 const int N = 80;
 
-std::function<precision(vec)> func = sphere<precision>;
-cmaes<precision> es(
+std::function<precision(vec)> func = sphere;
+cmaes es(
 		func,
 		vec::Zero(N), 1.0, numofdog
 		);
@@ -305,7 +305,7 @@ cmaes<precision> es(
 //initialize val for record
 vec topf = vec::Zero(maxiter);
 vec meanf = vec::Zero(maxiter);
-vec sigmaN = vec(maxiter);
+vec sigma = vec(maxiter);
 mat D = mat::Zero(maxiter, N);
 mat diagC = mat::Zero(maxiter, N);
 
@@ -383,7 +383,7 @@ void tick() {
 		//record
 		topf(esItr) = -1.0*topOfTrial;
 		meanf(esItr) = -1.0*meanReaching;
-		sigmaN(esItr) = es.sigma*es.N;
+		sigma(esItr) = es.sigma;
 		D.row(esItr) = es.D.transpose();
 		diagC.row(esItr) = es.C.diagonal().transpose();
 
@@ -429,12 +429,12 @@ void tick() {
 	if(esItr==maxiter){
 		//std::cout<<meanf<<std::endl;
 
-		export_data<precision>("plugins/result/es_result_topParam.csv", topDogCoeff);
-		export_data<precision>("plugins/result/es_result_topf.csv", topf);
-		export_data<precision>("plugins/result/es_result_meanf.csv", meanf);
-		export_data<precision>("plugins/result/es_result_sigmaN.csv", sigmaN);
-		export_data<precision>("plugins/result/es_result_D.csv", D);
-		export_data<precision>("plugins/result/es_result_diagC.csv", diagC);
+		export_data("plugins/result/es_result_topParam.csv", topDogCoeff);
+		export_data("plugins/result/es_result_topf.csv", topf);
+		export_data("plugins/result/es_result_meanf.csv", meanf);
+		export_data("plugins/result/es_result_sigma.csv", sigma);
+		export_data("plugins/result/es_result_D.csv", D);
+		export_data("plugins/result/es_result_diagC.csv", diagC);
 
 		end = std::chrono::system_clock::now();
 		double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();

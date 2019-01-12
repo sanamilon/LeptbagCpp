@@ -1,5 +1,5 @@
-#ifndef FUNC_ES_CPP
-#define FUNC_ES_CPP
+#ifndef FUNC_CMAES_CPP
+#define FUNC_CMAES_CPP
 
 #include <iostream>
 #include <Eigen/Dense>
@@ -8,8 +8,10 @@
 #include <math.h>
 #include <array>
 
-template<typename T>
-std::vector<int> argsort(const Eigen::Matrix<T, Eigen::Dynamic, 1> &v){
+using vec = Eigen::Matrix<double, Eigen::Dynamic, 1>;
+using mat = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>;
+
+std::vector<int> argsort(const vec &v){
 
 	std::vector<int> idx;
 	idx.resize(v.size());
@@ -21,10 +23,9 @@ std::vector<int> argsort(const Eigen::Matrix<T, Eigen::Dynamic, 1> &v){
 	return idx;
 }
 
-template<typename T>
-Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> sort_matrix_row_with_indices(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& m, std::vector<int> idx){
+mat sort_matrix_row_with_indices(mat& m, std::vector<int> idx){
 
-	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> sorted = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(m.rows(), m.cols());
+	mat sorted = mat(m.rows(), m.cols());
 	for(int i=0; i<idx.size(); i++){
 		sorted.row(i) = m.row(idx[i]);
 	}

@@ -1,5 +1,5 @@
-#ifndef OBJECTIVE_FUNC_CPP
-#define OBJECTIVE_FUNC_CPP
+#ifndef OBFECTIVE_FUNC_CPP
+#define OBFECTIVE_FUNC_CPP
 
 #include <iostream>
 #include <vector>
@@ -8,14 +8,16 @@
 #include <array>
 #include <Eigen/Dense>
 
+using vec = Eigen::Matrix<double, Eigen::Dynamic, 1>;
+using mat = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>;
+
 
 //exp( linspace[first, last] )
-template<typename T>
-Eigen::Matrix<T, Eigen::Dynamic, 1> expList(float first, float last, int n)
+vec expList(double first, double last, int n)
 {
-	Eigen::Matrix<T, Eigen::Dynamic, 1> vector(n); // native C++ array or vector can be used of course
-	float m = (float) 1 / (n - 1);
-	float quotient = pow(last / first, m);
+	vec vector(n); // native C++ array or vector can be used of course
+	double m = (double) 1 / (n - 1);
+	double quotient = pow(last / first, m);
 
 	vector(0) = first;
 
@@ -26,10 +28,9 @@ Eigen::Matrix<T, Eigen::Dynamic, 1> expList(float first, float last, int n)
 }
 
 //gram_schmidt, each row is normalized base
-template<typename T>
-Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> gram_schmidt(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> mat){
+mat gram_schmidt(mat m){
 	//if(debug) std::cout<<"gram_schmidt"<<std::endl;
-	auto Ro = mat;
+	auto Ro = m;
 	for(int i=0; i<Ro.rows(); i++){
 		for(int j=0; j<i; j++){
 			Ro.row(i) = Ro.row(i) - Ro.row(i).dot(Ro.row(j)) * Ro.row(j);
@@ -40,33 +41,32 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> gram_schmidt(Eigen::Matrix<T, E
 }
 
 
-static Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> R;
-static bool fixed_rotation = false;
-static bool R_initialized = false;
-static const float EllipsoidCondition = 3;
+
 //rotation of ellipsoid
 //optimal(0, ..., 0)
-template<typename type>
-type rotated_ellipsoid(Eigen::Matrix<type, Eigen::Dynamic, 1> arx){
+double rotated_ellipsoid(vec arx){
+
+	static mat R;
+	static bool fixed_rotation = false;
+	static bool R_initialized = false;
+	static const double EllipsoidCondition = 10;
 
 	if(fixed_rotation){ srand(7); }
 
 	if(!R_initialized){
-		R = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>::Random(arx.size(), arx.size());
-		R = gram_schmidt<double>(R);
+		R = mat::Random(arx.size(), arx.size());
+		R = gram_schmidt(R);
 		R_initialized = true;
 	}
 
-	Eigen::Matrix<type, Eigen::Dynamic, 1> w = expList<type>(1.0, pow(10.0, EllipsoidCondition), arx.size());
-	Eigen::Matrix<type, Eigen::Dynamic, 1> y;
-	y = R.cast<type>()*arx;
+	vec w = expList(1.0, pow(10.0, EllipsoidCondition), arx.size());
+	vec y = R*arx;
 
 	return sqrt( ( w.array()*(y.array()*y.array()) ).sum() );
 }
 
 //optimal(0, ..., 0)
-template<typename type>
-type sphere(Eigen::Matrix<type, Eigen::Dynamic, 1> arx){
+double sphere(vec arx){
 	return arx.norm();
 }
 

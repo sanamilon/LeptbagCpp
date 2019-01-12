@@ -1,9 +1,12 @@
-main.o: main.cpp cmaes.cpp func_es.cpp objective_func.cpp export.cpp
+main.o: main.cpp cmaes.hpp cmaes.cpp func_cmaes.cpp test_function.cpp \
+  export.cpp
+
+cmaes.hpp:
 
 cmaes.cpp:
 
-func_es.cpp:
+func_cmaes.cpp:
 
-objective_func.cpp:
+test_function.cpp:
 
 export.cpp:

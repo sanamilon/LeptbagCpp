@@ -33,7 +33,7 @@ optimizer::optimizer(
 	//constant
 	this->N = init_mean.size();
 
-	this->Ptarget = 2.0 / 11.0;
+	this->Ptarget = pow(10, -3);//2.0 / 11.0;
 	this->d = 1.0 + this->N/2.0;
 	this->cp = 1.0/12.0;
 	this->c = 2.0 / (this->N + 2.0);

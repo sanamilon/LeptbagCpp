@@ -1,9 +1,10 @@
 PROG := app
-SRCS := main.cpp export.cpp
+SRCS := main.cpp
 OBJS := $(SRCS:%.cpp=%.o)
 DEPS := $(SRCS:%.cpp=%.d)
 
 CC := g++
+CCFLAGS := -std=c++14
 
 all: $(PROG)
 
@@ -13,7 +14,7 @@ $(PROG): $(OBJS)
 	$(CC) -o $@ $^
 
 %.o: %.cpp
-	$(CC) -c -std=c++11 -MMD -MP $<
+	$(CC) -c $(CCFLAGS) -MMD -MP $<
 
 clean:
-	rm -f *.o $(PROG) $(OBJS) $(DEPS)
+	rm -f $(PROG) $(OBJS) $(DEPS)

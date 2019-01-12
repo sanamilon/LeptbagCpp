@@ -1,19 +1,20 @@
 #ifndef EXPORT_CPP
 #define EXPORT_CPP
 
-
 #include <fstream>
 #include <Eigen/Dense>
 
-template<typename T>
-void export_data(std::string filename, Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> mat){
+using vec = Eigen::Matrix<double, Eigen::Dynamic, 1>;
+using mat = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>;
+
+void export_data(std::string filename, mat m){
 
 	std::ofstream data;
 	data.open(filename);
-	for(int i=0; i<mat.rows(); i++){
-		for(int j=0; j<mat.cols(); j++){
-			data<<mat(i, j);
-			if(j!=mat.cols()-1){
+	for(int i=0; i<m.rows(); i++){
+		for(int j=0; j<m.cols(); j++){
+			data<<m(i, j);
+			if(j!=m.cols()-1){
 				data<<",";
 			}
 		}
@@ -23,14 +24,13 @@ void export_data(std::string filename, Eigen::Matrix<T, Eigen::Dynamic, Eigen::D
 
 };
 
-template<typename T>
-void export_data(std::string filename, Eigen::Matrix<T, Eigen::Dynamic, 1> vec){
+void export_data(std::string filename, vec v){
 
 	std::ofstream data;
 	data.open(filename);
-	for(int i=0; i<vec.size(); i++){
-		data<<vec(i);
-		if(i!=vec.size()-1){
+	for(int i=0; i<v.size(); i++){
+		data<<v(i);
+		if(i!=v.size()-1){
 			data<<",";
 		}
 	}
