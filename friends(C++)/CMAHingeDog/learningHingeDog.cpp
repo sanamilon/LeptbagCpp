@@ -18,7 +18,8 @@ parameterPack* paramPack(ARGS... args){
 
 
 
-const int numofdog = 30;
+const bool phaseOsci = true;
+const int numofdog = 150;
 const int dnacol = 20;
 const int dnarow = 4;
 
@@ -237,26 +238,31 @@ class dog {
 
 	void move(int sequence){
 
-		/*
-		phi[0] = hinge_body_legFrontLeft->getHingeAngle();
-		phi[1] = hinge_body_legFrontRight->getHingeAngle();
-		phi[2] = hinge_body_legBackLeft->getHingeAngle();
-		phi[3] = hinge_body_legBackRight->getHingeAngle();
+		if(phaseOsci){
+			//phaseOscillator
+			phi[0] = hinge_body_legFrontLeft->getHingeAngle();
+			phi[1] = hinge_body_legFrontRight->getHingeAngle();
+			phi[2] = hinge_body_legBackLeft->getHingeAngle();
+			phi[3] = hinge_body_legBackRight->getHingeAngle();
 
-		this->phi2theta();
-		this->osci->calTheta();
-		this->theta2phi();
+			this->phi2theta();
+			this->osci->calTheta();
+			this->theta2phi();
 
-		hinge_body_legFrontLeft->setMotorTarget(this->phi[0], 0.1);
-		hinge_body_legFrontRight->setMotorTarget(this->phi[1], 0.1);
-		hinge_body_legBackLeft->setMotorTarget(this->phi[2], 0.1);
-		hinge_body_legBackRight->setMotorTarget(this->phi[3], 0.1);
-		*/
+			hinge_body_legFrontLeft->setMotorTarget(this->phi[0], 0.1);
+			hinge_body_legFrontRight->setMotorTarget(this->phi[1], 0.1);
+			hinge_body_legBackLeft->setMotorTarget(this->phi[2], 0.1);
+			hinge_body_legBackRight->setMotorTarget(this->phi[3], 0.1);
+		}else{
 
-		hinge_body_legFrontLeft->setMotorTarget(dna[sequence][0], 0.3);
-		hinge_body_legFrontRight->setMotorTarget(dna[sequence][1], 0.3);
-		hinge_body_legBackLeft->setMotorTarget(dna[sequence][2], 0.3);
-		hinge_body_legBackRight->setMotorTarget(dna[sequence][3], 0.3);
+			//serialOrder
+			hinge_body_legFrontLeft->setMotorTarget(dna[sequence][0], 0.3);
+			hinge_body_legFrontRight->setMotorTarget(dna[sequence][1], 0.3);
+			hinge_body_legBackLeft->setMotorTarget(dna[sequence][2], 0.3);
+			hinge_body_legBackRight->setMotorTarget(dna[sequence][3], 0.3);
+
+		}
+
 	}
 
 
@@ -293,8 +299,8 @@ dog* meanDog;
 using precision = double;
 using vec = Eigen::Matrix<precision, Eigen::Dynamic, 1>;
 using mat = Eigen::Matrix<precision, Eigen::Dynamic, Eigen::Dynamic>;
-const int maxiter = 500;
-const int N = 80;
+const int maxiter = 300;
+const int N = phaseOsci? 4+2*3*4*(4-1):80;
 
 std::function<precision(vec)> func = sphere;
 cmaes es(
@@ -317,25 +323,43 @@ void init() {
 	std::cout<<"maxiter : "<<maxiter<<std::endl;
 
 	es.generateSample();
+	std::cout<<1<<std::endl;
 
 	meanDog = new dog(0, 1.5, 10.0);
 	meanDog->initPosition = meanDog->getPosition();
-	int c=0;
-	for(int i=0; i<20; i++){
-		for(int j=0;j<4;j++){
-			meanDog->dna[i][j] = es.mean(c++);
-		}
-	}
+	if(phaseOsci){
 
-	for (int n = 0; n < numofdog; n++){
-		doglist.push_back(new dog(0, 1.5, -10.0*n));
-		doglist[n]->initPosition = doglist[n]->getPosition();
-		c = 0;
-		for(int i=0; i<20; i++){
-			for(int j=0;j<4;j++){
-				doglist[n]->dna[i][j] = es.sample.row(n)(c++);
+		for(int i=0; i<N; i++){
+			meanDog->osci->coeff[i] = es.mean(i);
+		}
+		for(int n = 0; n < numofdog; n++){
+
+			doglist.push_back(new dog(0, 1.5, -10.0*n));
+			doglist[n]->initPosition = doglist[n]->getPosition();
+			for(int i=0; i<20; i++){
+				doglist[n]->osci->coeff[i] = es.sample.row(n)(i);
 			}
 		}
+
+	}else{
+
+		int c=0;
+		for(int i=0; i<20; i++){
+			for(int j=0;j<4;j++){
+				meanDog->dna[i][j] = es.mean(c++);
+			}
+		}
+		for (int n = 0; n < numofdog; n++) {
+			doglist.push_back(new dog(0, 1.5, -10.0*n));
+			doglist[n]->initPosition = doglist[n]->getPosition();
+			c = 0;
+			for(int i=0; i<20; i++){
+				for(int j=0;j<4;j++){
+					doglist[n]->dna[i][j] = es.sample.row(n)(c++);
+				}
+			}
+		}
+
 	}
 
 }
@@ -352,6 +376,7 @@ vec topDogCoeff;
 
 extern "C"
 void tick() {
+
 
 	//dogs move
 	if(timerDivisor++ == 6){
@@ -403,22 +428,40 @@ void tick() {
 		for(int n=0; n<numofdog; n++){
 			doglist[n]->despawn();
 		}
+
 		//hello dogs
-		meanDog->spawn(0, 1.5, 10.0);
-		int c=0;
-		for(int i=0; i<20; i++){
-			for(int j=0;j<4;j++){
-				meanDog->dna[i][j] = es.mean(c++);
+		if(phaseOsci){
+
+			meanDog->spawn(0, 1.5, 10.0);
+			for(int i=0; i<N; i++){
+				meanDog->osci->coeff[i] = es.mean(i);
 			}
-		}
-		for (int n = 0; n < numofdog; n++) {
-			doglist[n]->spawn(0, 1.5, -10.0*n);
-			c = 0;
-			for(int i=0; i<20; i++){
-				for(int j=0;j<4;j++){
-					doglist[n]->dna[i][j] = es.sample.row(n)(c++);
+			for(int n = 0; n < numofdog; n++){
+				doglist[n]->spawn(0, 1.5, -10.0*n);
+				for(int i=0; i<20; i++){
+					doglist[n]->osci->coeff[i] = es.sample.row(n)(i);
 				}
 			}
+
+		}else{
+
+			meanDog->spawn(0, 1.5, 10.0);
+			int c=0;
+			for(int i=0; i<20; i++){
+				for(int j=0;j<4;j++){
+					meanDog->dna[i][j] = es.mean(c++);
+				}
+			}
+			for (int n = 0; n < numofdog; n++) {
+				doglist[n]->spawn(0, 1.5, -10.0*n);
+				c = 0;
+				for(int i=0; i<20; i++){
+					for(int j=0;j<4;j++){
+						doglist[n]->dna[i][j] = es.sample.row(n)(c++);
+					}
+				}
+			}
+
 		}
 
 		esItr++;
