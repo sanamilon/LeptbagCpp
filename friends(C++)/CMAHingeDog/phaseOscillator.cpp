@@ -13,6 +13,7 @@ class phaseOscillator{
 	int degreeOfFourier;
 	Eigen::Matrix<double, Eigen::Dynamic, 1> coeff;
 
+
 	phaseOscillator(int numOfOsci, int degreeOfFourier){
 
 
@@ -57,6 +58,12 @@ class phaseOscillator{
 		}
 
 
+	}
+
+	void resetOscillator(){
+		for(int t=0; t<numOfOsci; t++){
+			this->theta[t] = 0.0;
+		}
 	}
 
 

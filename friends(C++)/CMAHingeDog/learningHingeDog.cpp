@@ -18,7 +18,7 @@ parameterPack* paramPack(ARGS... args){
 
 
 
-const bool phaseOsci = true;
+const bool phaseOsci = false;
 const int numofdog = 50;
 const int dnacol = 20;
 const int dnarow = 4;
@@ -93,6 +93,7 @@ class dog {
 		for(double p: phi){
 			p = 0.0;
 		}
+		this->osci->resetOscillator();
 
 		//犬の体の構造を定義している
 		//キューブで肉体を作る cubeshape::create(位置, 大きさ, 傾き, 重さ, 追加先物理世界);
@@ -292,6 +293,10 @@ class dog {
 };
 
 
+//--------------------------------------------------------------------
+//init and simulating loop
+//--------------------------------------------------------------------
+
 std::vector<dog*> doglist;
 dog* meanDog;
 
@@ -299,8 +304,8 @@ dog* meanDog;
 using precision = double;
 using vec = Eigen::Matrix<precision, Eigen::Dynamic, 1>;
 using mat = Eigen::Matrix<precision, Eigen::Dynamic, Eigen::Dynamic>;
-const int maxiter = 300;
 const int N = phaseOsci? 4+2*3*4*(4-1):80;
+const int maxiter = 300;
 
 std::function<precision(vec)> func = sphere;
 cmaes es(
@@ -368,6 +373,8 @@ void init() {
 
 	}
 
+	std::cout<<"itr 0 starts.-------------"<<std::endl;
+
 }
 
 int esItr = 0;
@@ -379,13 +386,19 @@ int sequence = 0;
 float topOfTrial = -1000000000;
 vec topDogCoeff;
 
+//taking mean
+const int evaluateMeanOf = 3;
+int meanCount = 0;
+double meanReaching = 0.0;
+double reachingDistance[numofdog] = {0.0};
 
 extern "C"
 void tick() {
 
+	//std::cout<<"\t\tclock : "<<clockOfTrial<<std::endl;
 
 	//dogs move
-	if(timerDivisor++ == 6){
+	if(timerDivisor++ == 5){
 		sequence = (sequence+1)%20;
 		timerDivisor = 0;
 		meanDog->move(sequence);
@@ -394,40 +407,27 @@ void tick() {
 		}
 	}
 
-	clockOfTrial++;
-
-	//end an itr
-	if(clockOfTrial==limitOfTrial){
+	//end a trial
+	if(++clockOfTrial==limitOfTrial){
 		lastitr = esItr;
 
+		std::cout<<"\t"<<(meanCount+1)<<"/"<<evaluateMeanOf<<" ends."<<std::endl;
+
 		//evaluation
-		float meanReaching = meanDog->getPosition()[0] - meanDog->initPosition[0];
+		double meanReach = 0.0;
+		meanReach = meanDog->getPosition()[0] - meanDog->initPosition[0];
+		meanReaching += meanReach;
+		double topOfThisCount = -100000000000.0;
 		for(int n=0; n<numofdog; n++){
-			float reachingDistance = doglist[n]->getPosition()[0] - doglist[n]->initPosition[0];
-			es.arf(n) = -1.0*reachingDistance; //esは最小値を探す
-			if(topOfTrial<reachingDistance){
-				topOfTrial = reachingDistance;
-				topDogCoeff = es.sample.row(n);
+			double reach = 0.0;
+			reach = doglist[n]->getPosition()[0] - doglist[n]->initPosition[0];
+			reachingDistance[n] += reach;
+			if(topOfThisCount<reach){
+				topOfThisCount = reach;
 			}
 		}
-
-		//record
-		topf(esItr) = -1.0*topOfTrial;
-		meanf(esItr) = -1.0*meanReaching;
-		sigma(esItr) = es.sigma;
-		D.row(esItr) = es.D.transpose();
-		diagC.row(esItr) = es.C.diagonal().transpose();
-
-		if(esItr%1==0){
-			std::cout<<"itr "<<esItr<<" ends."<<std::endl;
-			std::cout<<"\ttop : "<<topOfTrial<<std::endl;
-			std::cout<<"\tmeanDog : "<<meanReaching<<std::endl;
-		}
-
-		topOfTrial = -10000000;
-
-		es.updateParam();
-		es.generateSample();
+		std::cout<<"\t\ttop : "<<topOfThisCount<<std::endl;
+		std::cout<<"\t\tmeanDog : "<<meanReach<<std::endl;
 
 		//goodbye dogs
 		meanDog->despawn();
@@ -436,42 +436,90 @@ void tick() {
 		}
 
 		//hello dogs
-		if(phaseOsci){
-
-			meanDog->spawn(0, 1.5, 10.0);
-			for(int i=0; i<N; i++){
-				meanDog->osci->coeff[i] = es.mean(i);
-			}
-			for(int n = 0; n < numofdog; n++){
-				doglist[n]->spawn(0, 1.5, -10.0*n);
-				for(int i=0; i<20; i++){
-					doglist[n]->osci->coeff[i] = es.sample.row(n)(i);
-				}
-			}
-
-		}else{
-
-			meanDog->spawn(0, 1.5, 10.0);
-			int c=0;
-			for(int i=0; i<20; i++){
-				for(int j=0;j<4;j++){
-					meanDog->dna[i][j] = es.mean(c++);
-				}
-			}
-			for (int n = 0; n < numofdog; n++) {
-				doglist[n]->spawn(0, 1.5, -10.0*n);
-				c = 0;
-				for(int i=0; i<20; i++){
-					for(int j=0;j<4;j++){
-						doglist[n]->dna[i][j] = es.sample.row(n)(c++);
-					}
-				}
-			}
-
+		meanDog->spawn(0, 1.5, 10.0);
+		for(int n = 0; n < numofdog; n++){
+			doglist[n]->spawn(0, 1.5, -10.0*n);
 		}
 
-		esItr++;
+		//itr ends.
+		if(++meanCount == evaluateMeanOf){
+
+
+			//record
+
+			for(int n=0; n<numofdog; n++){
+				if(topOfTrial<reachingDistance[n]/double(evaluateMeanOf)){
+					topOfTrial = reachingDistance[n]/double(evaluateMeanOf);
+					topDogCoeff = es.sample.row(n);
+				}
+				es.arf(n) = -1.0*reachingDistance[n];
+				reachingDistance[n] = 0.0;
+			}
+
+			topf(esItr) = -1.0*topOfTrial;
+			meanf(esItr) = -1.0*meanReaching/double(evaluateMeanOf);
+			sigma(esItr) = es.sigma;
+			D.row(esItr) = es.D.transpose();
+			diagC.row(esItr) = es.C.diagonal().transpose();
+
+			std::cout<<"itr "<<esItr<<" ends."<<std::endl;
+			std::cout<<"\ttop : "<<topOfTrial<<std::endl;
+			std::cout<<"\tmeanDog : "<<meanReaching/double(evaluateMeanOf)<<std::endl;
+			meanReaching = 0.0;
+
+			topOfTrial = -10000000;
+
+			//one es generation ends
+			es.updateParam();
+			es.generateSample();
+
+			//goodbye dogs
+			meanDog->despawn();
+			for(int n=0; n<numofdog; n++){
+				doglist[n]->despawn();
+			}
+
+			//hello dogs
+			if(phaseOsci){
+
+				meanDog->spawn(0, 1.5, 10.0);
+				for(int i=0; i<N; i++){
+					meanDog->osci->coeff[i] = es.mean(i);
+				}
+				for(int n = 0; n < numofdog; n++){
+					doglist[n]->spawn(0, 1.5, -10.0*n);
+					for(int i=0; i<20; i++){
+						doglist[n]->osci->coeff[i] = es.sample.row(n)(i);
+					}
+				}
+
+			}else{
+
+				meanDog->spawn(0, 1.5, 10.0);
+				int c=0;
+				for(int i=0; i<20; i++){
+					for(int j=0;j<4;j++){
+						meanDog->dna[i][j] = es.mean(c++);
+					}
+				}
+				for (int n = 0; n < numofdog; n++) {
+					doglist[n]->spawn(0, 1.5, -10.0*n);
+					c = 0;
+					for(int i=0; i<20; i++){
+						for(int j=0;j<4;j++){
+							doglist[n]->dna[i][j] = es.sample.row(n)(c++);
+						}
+					}
+				}
+
+			}
+
+			meanCount = 0;
+			std::cout<<"itr "<<esItr<<" starts.-------------"<<std::endl;
+			esItr++;
+		}
 		clockOfTrial = 0;
+
 	}
 
 	//end learning
@@ -487,7 +535,7 @@ void tick() {
 
 		end = std::chrono::system_clock::now();
 		double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
-		std::cout<<elapsed<<std::endl;
+		std::cout<<"time : "<<elapsed<<"msec"<<std::endl;
 
 		exit(0);
 	}
