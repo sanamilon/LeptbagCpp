@@ -19,7 +19,7 @@ parameterPack* paramPack(ARGS... args){
 
 
 const bool phaseOsci = true;
-const int numofdog = 150;
+const int numofdog = 50;
 const int dnacol = 20;
 const int dnarow = 4;
 
@@ -321,9 +321,15 @@ void init() {
 	start = std::chrono::system_clock::now();
 
 	std::cout<<"maxiter : "<<maxiter<<std::endl;
+	std::cout<<"controller : ";
+	if(phaseOsci){
+		std::cout<<"phase oscillator"<<std::endl;
+	}else{
+		std::cout<<"serial order"<<std::endl;
+	}
+
 
 	es.generateSample();
-	std::cout<<1<<std::endl;
 
 	meanDog = new dog(0, 1.5, 10.0);
 	meanDog->initPosition = meanDog->getPosition();
