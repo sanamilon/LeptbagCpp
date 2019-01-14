@@ -18,7 +18,8 @@ parameterPack* paramPack(ARGS... args){
 
 
 
-const bool phaseOsci = false;
+const bool phaseOsci = true;
+const int POdegreeOfFourier = 1;
 const int numofdog = 50;
 const int dnacol = 20;
 const int dnarow = 4;
@@ -75,7 +76,7 @@ class dog {
 	hingeConstraint* hinge_body_legBackRight;
 	hingeConstraint* hinge_body_tail;
 
-	phaseOscillator *osci = new phaseOscillator(4, 3);
+	phaseOscillator *osci = new phaseOscillator(4, POdegreeOfFourier);
 
 	static constexpr double phi_max = M_PI/3;
 	double phi[4];
@@ -304,8 +305,8 @@ dog* meanDog;
 using precision = double;
 using vec = Eigen::Matrix<precision, Eigen::Dynamic, 1>;
 using mat = Eigen::Matrix<precision, Eigen::Dynamic, Eigen::Dynamic>;
-const int N = phaseOsci? 4+2*3*4*(4-1):80;
-const int maxiter = 300;
+const int N = phaseOsci? 4+2*POdegreeOfFourier*4*(4-1):80;
+const int maxiter = 700;
 
 std::function<precision(vec)> func = sphere;
 cmaes es(
@@ -321,23 +322,40 @@ mat D = mat::Zero(maxiter, N);
 mat diagC = mat::Zero(maxiter, N);
 
 std::chrono::system_clock::time_point start, end;
+
+//for taking mean of multiple trials in one itr.
+const int evaluateMeanOf = 5;
+int meanCount = 0;
+double meanReaching = 0.0;
+double reachingDistance[numofdog] = {0.0};
+
+int esItr = 0;
+int lastitr = 0;
+int timerDivisor = 0;
+int clockOfTrial = 0;
+const int limitOfTrial = 500;
+int sequence = 0;
+float topOfTrial = -1000000000;
+vec topDogCoeff;
+
 extern "C"
 void init() {
 	start = std::chrono::system_clock::now();
 
 	std::cout<<"maxiter : "<<maxiter<<std::endl;
+	std::cout<<"trial time : "<<limitOfTrial<<std::endl;
 	std::cout<<"controller : ";
 	if(phaseOsci){
 		std::cout<<"phase oscillator"<<std::endl;
 	}else{
 		std::cout<<"serial order"<<std::endl;
 	}
+	std::cout<<"take a mean of "<<evaluateMeanOf<<" trials in one itr"<<std::endl;
 
 
 	es.generateSample();
 
 	meanDog = new dog(0, 1.5, 10.0);
-	meanDog->initPosition = meanDog->getPosition();
 	if(phaseOsci){
 
 		for(int i=0; i<N; i++){
@@ -346,7 +364,6 @@ void init() {
 		for(int n = 0; n < numofdog; n++){
 
 			doglist.push_back(new dog(0, 1.5, -10.0*n));
-			doglist[n]->initPosition = doglist[n]->getPosition();
 			for(int i=0; i<20; i++){
 				doglist[n]->osci->coeff[i] = es.sample.row(n)(i);
 			}
@@ -377,20 +394,6 @@ void init() {
 
 }
 
-int esItr = 0;
-int lastitr = 0;
-int timerDivisor = 0;
-int clockOfTrial = 0;
-const int limitOfTrial = 500;
-int sequence = 0;
-float topOfTrial = -1000000000;
-vec topDogCoeff;
-
-//taking mean
-const int evaluateMeanOf = 3;
-int meanCount = 0;
-double meanReaching = 0.0;
-double reachingDistance[numofdog] = {0.0};
 
 extern "C"
 void tick() {
@@ -462,7 +465,7 @@ void tick() {
 			D.row(esItr) = es.D.transpose();
 			diagC.row(esItr) = es.C.diagonal().transpose();
 
-			std::cout<<"itr "<<esItr<<" ends."<<std::endl;
+			std::cout<<"end."<<std::endl;
 			std::cout<<"\ttop : "<<topOfTrial<<std::endl;
 			std::cout<<"\tmeanDog : "<<meanReaching/double(evaluateMeanOf)<<std::endl;
 			meanReaching = 0.0;
@@ -535,7 +538,7 @@ void tick() {
 
 		end = std::chrono::system_clock::now();
 		double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
-		std::cout<<"time : "<<elapsed<<"msec"<<std::endl;
+		std::cout<<"total time : "<<elapsed<<"msec"<<std::endl;
 
 		exit(0);
 	}

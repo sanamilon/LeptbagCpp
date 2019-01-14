@@ -48,7 +48,7 @@ class phaseOscillator{
 				if(i!=j){
 					for(int k=0; k<this->degreeOfFourier; k++){
 						this->theta[i] += this->coeff[c++]*sin(this->theta[i] - this->theta[j]);
-						this->theta[i] += this->coeff[c++]*cos(this->theta[i] - this->theta[j]);
+						//this->theta[i] += this->coeff[c++]*cos(this->theta[i] - this->theta[j]);
 					}
 				}
 			}
